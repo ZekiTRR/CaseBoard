@@ -26,7 +26,7 @@ export function toggleClass(el: HTMLElement, className: string, enabled: boolean
 }
 
 export function nextFrame(): Promise<void> {
-  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  return new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
 }
 
 export function getScrollParent(el: HTMLElement | null): HTMLElement | null {

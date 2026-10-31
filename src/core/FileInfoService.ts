@@ -86,7 +86,7 @@ export class FileInfoService {
 
     const cache = this.app.metadataCache.getFileCache(file);
     const tags = (cache ? getAllTags(cache) ?? [] : []).map((tag) => tag.replace(/^#/, ""));
-    const frontmatter = cache?.frontmatter as Record<string, unknown> | undefined;
+    const frontmatter: Record<string, unknown> | undefined = cache?.frontmatter;
     const title =
       typeof frontmatter?.title === "string" && frontmatter.title.trim()
         ? frontmatter.title.trim()

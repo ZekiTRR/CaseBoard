@@ -206,7 +206,9 @@ export class CaseboardSettingsTab extends PluginSettingTab {
 
     let boardFolderInput: HTMLInputElement | null = null;
     let pendingBoardFolder = settings.boardFolder;
-    const defaultBoardFolder = `${this.caseboardPlugin.manifest.dir ?? ".obsidian/plugins/caseboard"}/boards`;
+    const pluginDir =
+      this.caseboardPlugin.manifest.dir ?? `${this.app.vault.configDir}/plugins/caseboard`;
+    const defaultBoardFolder = `${pluginDir}/boards`;
     new Setting(containerEl)
       .setName("Board folder")
       .setDesc(
@@ -249,7 +251,7 @@ export class CaseboardSettingsTab extends PluginSettingTab {
         `${boards.length} board${boards.length === 1 ? "" : "s"} stored in ${this.store.getBoardDirectory()}.`,
       )
       .addButton((button) =>
-        button.setButtonText("Open Caseboard").onClick(() => this.host.openBoard()),
+        button.setButtonText("Open the board").onClick(() => this.host.openBoard()),
       )
       .addButton((button) =>
         button

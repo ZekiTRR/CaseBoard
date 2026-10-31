@@ -301,7 +301,7 @@ export class NodeView {
       if (this.textEl && this.node.type === "text") {
         const desired = this.textEl.scrollHeight + 46;
         if (desired > this.node.height + 4) {
-          this.host.onTextAutoGrow(this.node as TextBoardNode, desired);
+          this.host.onTextAutoGrow(this.node, desired);
         }
       }
     });

@@ -1,9 +1,10 @@
 {
-  "id": "caseboard",
-  "name": "Caseboard",
-  "version": "1.0.0",
-  "minAppVersion": "1.5.0",
-  "description": "A cinematic detective investigation board: pin notes, photographs and evidence, connect them with red threads, and import linked notes from your vault.",
-  "author": "YOKOSHIP",
-  "isDesktopOnly": true
+	"id": "caseboard",
+	"name": "Caseboard",
+	"version": "1.0.0",
+	"minAppVersion": "1.7.2",
+	"description": "A cinematic detective investigation board for your vault - pin notes, photographs and evidence, run red threads between them, and import linked notes.",
+	"author": "YOKOSHIP",
+	"authorUrl": "https://github.com/ZekiTRR",
+	"isDesktopOnly": true
 }

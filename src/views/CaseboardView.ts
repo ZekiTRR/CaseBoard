@@ -1,5 +1,4 @@
 import {
-  ConfirmationModal,
   ItemView,
   Menu,
   Notice,
@@ -54,6 +53,7 @@ import { TapeInspector } from "../ui/TapeInspector";
 import type { ContextMenuHost } from "../ui/ContextMenus";
 import { ContextMenus } from "../ui/ContextMenus";
 import { ColorPickerModal } from "../ui/ColorPickerModal";
+import { ConfirmModal } from "../ui/ConfirmModal";
 import { Toolbar, type ToolbarActions } from "../ui/Toolbar";
 import { ThemePicker } from "../ui/ThemePicker";
 import { BoardMenu } from "../ui/BoardMenu";
@@ -222,9 +222,8 @@ export class CaseboardView
     this.history = new BoardHistory(HISTORY_LIMIT, () => this.updateHistoryButtons());
     await this.store.init();
 
-    const viewState = this.leaf.getViewState().state as Record<string, unknown> | undefined;
-    const stateBoardId =
-      typeof viewState?.boardId === "string" ? (viewState.boardId as string) : null;
+    const viewState = this.leaf.getViewState().state;
+    const stateBoardId = typeof viewState?.boardId === "string" ? viewState.boardId : null;
     const desired = this.pendingBoardId ?? stateBoardId;
     this.initialized = true;
     await this.openBoardInternal(desired, true);
@@ -269,7 +268,7 @@ export class CaseboardView
     this.boardImage = this.stage.createDiv({ cls: "cb-board-image" });
     this.boardImage.hidden = true;
     this.cameraEl = this.stage.createDiv({ cls: "cb-camera" });
-    this.threadsSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    this.threadsSvg = createSvg("svg");
     this.threadsSvg.setAttribute("class", "cb-threads");
     this.threadsSvg.setAttribute("width", "10");
     this.threadsSvg.setAttribute("height", "10");
@@ -1141,20 +1140,21 @@ export class CaseboardView
       void proceed();
       return;
     }
-    const modal = new ConfirmationModal(this.app);
+    const modal = new ConfirmModal(
+      this.app,
+      {
+        heading: "Delete this board?",
+        body: `“${board.name}” and its threads will be removed. Source notes are not touched.`,
+        confirmText: "Delete board",
+        cancelText: "Cancel",
+        destructive: true,
+      },
+      () => {
+        void proceed();
+      },
+    );
     modal.modalEl.addClass("caseboard-modal", "cb-confirm-modal");
     applyThemeTokens(modal.modalEl, board.theme);
-    modal.titleEl.setText("Delete this board?");
-    modal.contentEl.createEl("p", {
-      text: `“${board.name}” and its threads will be removed. Source notes are not touched.`,
-    });
-    modal.addButton((button) => {
-      button.setButtonText("Delete board").setWarning();
-      button.onClick(() => {
-        void proceed();
-      });
-    });
-    modal.addCancelButton("Cancel");
     modal.open();
   }
 
@@ -1196,29 +1196,17 @@ export class CaseboardView
   private updateBoardBackground(): void {
     const settings = this.board?.settings;
     const path = settings?.customBackground?.trim() ?? "";
-    if (!settings || !path) {
+    const file = path ? this.app.vault.getAbstractFileByPath(path) : null;
+    if (!settings || !(file instanceof TFile)) {
+      this.boardImage.setCssProps({ "--cb-bg-src": "none" });
       this.boardImage.hidden = true;
-      this.boardImage.style.backgroundImage = "";
-      this.root.classList.remove("has-background-image");
-      return;
-    }
-    const file = this.app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof TFile)) {
-      this.boardImage.hidden = true;
-      this.boardImage.style.backgroundImage = "";
       this.root.classList.remove("has-background-image");
       return;
     }
     const src = this.app.vault.adapter.getResourcePath(path);
-    this.boardImage.style.backgroundImage = `url("${src.replace(/"/g, '\\"')}")`;
-    if (settings.backgroundFit === "repeat") {
-      this.boardImage.style.backgroundSize = "420px auto";
-      this.boardImage.style.backgroundRepeat = "repeat";
-    } else {
-      this.boardImage.style.backgroundSize = settings.backgroundFit;
-      this.boardImage.style.backgroundRepeat = "no-repeat";
-    }
-    this.boardImage.style.backgroundPosition = "center";
+    this.boardImage.setCssProps({ "--cb-bg-src": `url("${src.replace(/"/g, '\\"')}")` });
+    this.boardImage.removeClass("is-cover", "is-contain", "is-repeat");
+    this.boardImage.addClass(`is-${settings.backgroundFit}`);
     this.root.style.setProperty("--cb-bg-dim", String(settings.backgroundDim));
     this.boardImage.hidden = false;
     this.root.classList.add("has-background-image");

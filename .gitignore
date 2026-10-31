@@ -1,19 +1,20 @@
+# Dependencies
 node_modules/
-dist/
-caseboard.zip
+
+# Build output is published through GitHub Releases, not committed
+main.js
+styles.css
+*.map
 
 # Obsidian runtime data
 data.json
 boards/
 
-# Build output is published through GitHub Releases
-main.js
-styles.css
-*.map
-
-# Local development artifacts
-dev/harness.js
-dev/harness.css
-dev/gallery/
-dev/shots/
+# Local packaging artifacts
+dist/
+*.zip
 *.log
+
+# OS
+.DS_Store
+Thumbs.db

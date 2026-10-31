@@ -414,11 +414,11 @@ function unique(values: string[]): string[] {
 }
 
 function colorFragment(color: string): DocumentFragment {
-  const fragment = document.createDocumentFragment();
-  const dot = document.createElement("span");
+  const fragment = createFragment();
+  const dot = createSpan();
   dot.className = "cb-menu-dot";
   dot.style.background = color;
-  const label = document.createElement("span");
+  const label = createSpan();
   label.textContent = color.toUpperCase();
   fragment.append(dot, label);
   return fragment;

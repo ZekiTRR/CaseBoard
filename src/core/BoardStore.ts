@@ -56,7 +56,7 @@ export class BoardStore {
 
   async init(): Promise<void> {
     if (this.initialized) return;
-    const raw = await this.plugin.loadData();
+    const raw: unknown = await this.plugin.loadData();
     this.data = normalizePluginData(raw);
 
     this.files.useFolder(this.data.settings.boardFolder);

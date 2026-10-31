@@ -47,17 +47,17 @@ export class BoardLoupe {
     private readonly root: HTMLElement,
     private readonly camera: CameraManager,
   ) {
-    this.el = document.createElement("div");
+    this.el = createDiv();
     this.el.className = "caseboard-root cb-loupe";
     this.el.hidden = true;
-    this.scene = document.createElement("div");
+    this.scene = createDiv();
     this.scene.className = "cb-loupe-scene";
-    this.host = document.createElement("div");
+    this.host = createDiv();
     this.host.className = "cb-loupe-host";
-    this.scale = document.createElement("div");
+    this.scale = createDiv();
     this.scale.className = "cb-loupe-scale";
     this.updateScaleLabel();
-    const glass = document.createElement("div");
+    const glass = createDiv();
     glass.className = "cb-loupe-glass";
     this.scene.appendChild(this.host);
     this.el.append(this.scene, glass, this.scale);
@@ -195,7 +195,7 @@ export class BoardLoupe {
     });
     this.cameraClone = clone;
 
-    const surface = document.createElement("div");
+    const surface = createDiv();
     surface.className = "cb-surface cb-loupe-surface";
     this.surfaceClone = surface;
 

@@ -51,10 +51,10 @@ export class ThemePicker {
       preview.style.setProperty("--preview-thread", theme.swatch[2]);
       preview.createDiv({ cls: "cb-theme-preview-paper p1" });
       preview.createDiv({ cls: "cb-theme-preview-paper p2" });
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      const svg = createSvg("svg");
       svg.setAttribute("class", "cb-theme-preview-thread");
       svg.setAttribute("viewBox", "0 0 66 48");
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const path = createSvg("path");
       path.setAttribute("d", "M 10 14 Q 32 32 56 20");
       path.setAttribute("fill", "none");
       path.setAttribute("stroke", theme.swatch[2]);

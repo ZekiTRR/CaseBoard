@@ -657,6 +657,10 @@
   scrollbar-width: thin;
 }
 
+.cb-popover.is-measuring {
+  visibility: hidden;
+}
+
 .cb-popover.is-open {
   opacity: 1;
   transform: none;

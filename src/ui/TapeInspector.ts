@@ -45,7 +45,7 @@ export class TapeInspector {
     }
     this.currentId = tape.id;
     this.el.removeAttribute("hidden");
-    requestAnimationFrame(() => this.el.classList.add("is-open"));
+    window.requestAnimationFrame(() => this.el.classList.add("is-open"));
     this.sync(tape);
   }
 

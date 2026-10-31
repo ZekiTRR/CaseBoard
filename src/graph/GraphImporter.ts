@@ -271,7 +271,7 @@ export class GraphImporter {
     }
 
     const cache = this.app.metadataCache.getFileCache(file);
-    const frontmatter = cache?.frontmatter as Record<string, unknown> | undefined;
+    const frontmatter: Record<string, unknown> | undefined = cache?.frontmatter;
     const tags = (cache ? getAllTags(cache) ?? [] : []).map((tag) =>
       tag.replace(/^#/, "").toLowerCase(),
     );
@@ -318,7 +318,13 @@ function readProperty(frontmatter: Record<string, unknown> | undefined, key: str
 function valueMatches(value: unknown, query: string): boolean {
   const needle = query.toLowerCase();
   if (Array.isArray(value)) return value.some((item) => valueMatches(item, query));
-  if (value === null || value === undefined) return false;
-  const text = String(value).toLowerCase();
-  return text === needle || text.includes(needle);
+  if (typeof value === "string") {
+    const text = value.toLowerCase();
+    return text === needle || text.includes(needle);
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value).toLowerCase().includes(needle);
+  }
+  if (value instanceof Date) return value.toISOString().toLowerCase().includes(needle);
+  return false;
 }

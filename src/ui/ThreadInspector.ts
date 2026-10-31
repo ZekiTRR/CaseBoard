@@ -77,7 +77,7 @@ export class ThreadInspector {
     const isSame = this.currentId === connection.id && this.el.classList.contains("is-open");
     this.currentId = connection.id;
     this.el.removeAttribute("hidden");
-    requestAnimationFrame(() => this.el.classList.add("is-open"));
+    window.requestAnimationFrame(() => this.el.classList.add("is-open"));
     if (!isSame) this.rebuildSwatches(connection.color);
     this.sync(connection);
   }

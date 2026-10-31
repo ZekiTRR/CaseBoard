@@ -264,7 +264,7 @@ function readConnections(
   const connections: BoardConnection[] = [];
 
   for (let index = 0; index < raw.length; index++) {
-    const item = raw[index];
+    const item: unknown = raw[index];
     if (!isRecord(item)) continue;
     const from = isRecord(item.from) ? item.from : null;
     const to = isRecord(item.to) ? item.to : null;

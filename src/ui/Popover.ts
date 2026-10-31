@@ -8,6 +8,10 @@ export interface PopoverOptions {
 
 let activePopover: Popover | null = null;
 
+function rememberActivePopover(popover: Popover | null): void {
+  activePopover = popover;
+}
+
 export class Popover {
   readonly el: HTMLElement;
   private anchor: HTMLElement | null = null;
@@ -39,7 +43,7 @@ export class Popover {
 
   open(anchor: HTMLElement, build: (el: HTMLElement) => void, options: PopoverOptions = {}): void {
     if (activePopover && activePopover !== this) activePopover.close();
-    activePopover = this;
+    rememberActivePopover(this);
 
     this.anchor = anchor;
     this.onCloseCallback = options.onClose ?? null;
@@ -51,9 +55,9 @@ export class Popover {
     this.el.style.width = options.width ? `${options.width}px` : "";
     this.openState = true;
 
-    this.el.style.visibility = "hidden";
+    this.el.addClass("is-measuring");
     this.position(anchor, options);
-    this.el.style.visibility = "";
+    this.el.removeClass("is-measuring");
 
     document.addEventListener("pointerdown", this.onOutsidePointer, true);
     document.addEventListener("keydown", this.onKeyDown, true);

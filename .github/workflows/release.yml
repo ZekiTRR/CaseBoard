@@ -1,48 +1,50 @@
-name: Release
+name: Release Obsidian plugin
 
 on:
   push:
     tags:
-      - "v*"
-
-permissions:
-  contents: write
+      - "*"
 
 jobs:
-  build-and-release:
-    name: Build plugin release
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Typecheck and build
-        run: npm run build
-
-      - name: Package plugin
+      - name: Build plugin
         run: |
-          mkdir -p caseboard
-          cp main.js styles.css manifest.json versions.json caseboard/
-          cd caseboard
-          zip -r ../caseboard.zip .
-          cd ..
+          npm ci
+          npm run build
 
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Check for optional styles
+        id: styles
+        run: |
+          [ -f styles.css ] && echo "exists=true" >> "$GITHUB_OUTPUT" || echo "exists=false" >> "$GITHUB_OUTPUT"
+
+      - name: Attest build provenance
+        uses: actions/attest@v4
         with:
-          generate_release_notes: true
-          files: |
-            caseboard.zip
+          subject-path: |
             main.js
-            styles.css
-            manifest.json
-            versions.json
+            ${{ steps.styles.outputs.exists == 'true' && 'styles.css' || '' }}
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+
+          gh release create "$tag" \
+            --title="$tag" \
+            --generate-notes \
+            main.js manifest.json ${{ steps.styles.outputs.exists == 'true' && 'styles.css' || '' }}

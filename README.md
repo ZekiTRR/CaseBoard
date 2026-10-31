@@ -1,187 +1,166 @@
-<div align="center">
-
-<img src="assets/screenshots/hero-cork.jpg" alt="Caseboard — детективная доска в Obsidian" width="100%" />
+![Caseboard investigation board](assets/screenshots/hero-cork.jpg)
 
 # Caseboard
 
-**Кинематографичная доска расследований для Obsidian.**
+**A cinematic detective investigation board for Obsidian.**
 
-Заметки, фотографии, красные нити, булавки, скотч, лупа и импорт графа связей — всё локально, в вашем хранилище.
+Pin notes, photographs and evidence to a cork board, connect them with red threads, and import linked notes from your vault. Everything is rendered by the plugin and stored locally — nothing ever leaves your machine.
 
 [![Release](https://img.shields.io/github/v/release/ZekiTRR/CaseBoard?label=release&color=b3352d)](https://github.com/ZekiTRR/CaseBoard/releases/latest)
-[![Obsidian](https://img.shields.io/badge/Obsidian-1.5.0%2B-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md)
-[![CI](https://github.com/ZekiTRR/CaseBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/ZekiTRR/CaseBoard/actions/workflows/ci.yml)
+[![Obsidian](https://img.shields.io/badge/Obsidian-1.7.2%2B-7c3aed?logo=obsidian&logoColor=white)](https://obsidian.md)
+[![Lint and build](https://github.com/ZekiTRR/CaseBoard/actions/workflows/lint.yml/badge.svg)](https://github.com/ZekiTRR/CaseBoard/actions/workflows/lint.yml)
 [![License](https://img.shields.io/github/license/ZekiTRR/CaseBoard?color=2f5b74)](LICENSE)
 
-[English](README.en.md) · [Возможности](#-возможности) · [Галерея](#-галерея) · [Установка](#-установка) · [Сборка](#-сборка)
-
-</div>
+[Русский](README.ru.md) · [Features](#-features) · [Gallery](#-gallery) · [Installation](#-installation) · [Privacy](#-privacy-and-storage) · [Build](#-build-and-release)
 
 ---
 
-## ✨ Возможности
+## ✨ Features
 
-- **Несколько досок расследований** с отдельными названиями, темами, камерой и историей изменений.
-- **Заметки, текст и фотографии** — перетаскивайте материалы из хранилища или добавляйте файлы с диска.
-- **Красные нити** с динамической, натянутой и статической физикой, провисанием, натяжением и легким покачиванием.
-- **Свободный скотч** — инструмент рядом с лупой позволяет клеить скотч на заметки, фотографии и пустую доску.
-- **Произвольный стиль скотча** — цвет через колорпикер, длина, ширина и поворот.
-- **Цвет булавки** — сохраненные пресеты темы плюс собственный цвет через колорпикер.
-- **Режим Bare** — карточка или фото без рамки, булавки и скотча.
-- **Лупа и глубокое масштабирование** — рассматривайте плотный текст без изменения всей доски.
-- **Плавное перемещение** — колесо мыши, трекпад, рука и мягкое инерционное движение камеры.
-- **Импорт связанных заметок** — граф, рекурсия, фильтры по папкам, тегам и свойствам, повторное обновление цепочек.
-- **5 тем оформления** — пробка, темное расследование, бетон, винтаж и маркерная доска.
-- **Свой фон доски** — изображение из хранилища или с диска, режимы заполнения и затемнение.
-- **Локальное хранение** — файлы досок не зависят от заметок и не отправляются никуда.
-- **Хоткеи на любой раскладке** — сочетания работают по физическому положению клавиш, включая русскую раскладку.
-
----
-
-## 🖼 Галерея
-
-### Темы
-
-<table>
-  <tr>
-    <td width="50%"><img src="assets/screenshots/theme-dark.jpg" alt="Тема Dark Investigation" /></td>
-    <td width="50%"><img src="assets/screenshots/theme-concrete.jpg" alt="Тема Concrete Wall" /></td>
-  </tr>
-  <tr>
-    <td><img src="assets/screenshots/theme-vintage.jpg" alt="Тема Vintage Paper" /></td>
-    <td><img src="assets/screenshots/theme-whiteboard.jpg" alt="Тема Whiteboard" /></td>
-  </tr>
-</table>
-
-### Материалы и инструменты
-
-<table>
-  <tr>
-    <td width="50%"><img src="assets/screenshots/tape-tool.jpg" alt="Инструмент скотча и панель цвета" /></td>
-    <td width="50%"><img src="assets/screenshots/loupe.jpg" alt="Лупа для локального увеличения" /></td>
-  </tr>
-  <tr>
-    <td><img src="assets/screenshots/bare-note.jpg" alt="Заметка в режиме Bare" /></td>
-    <td><img src="assets/screenshots/pin-color.jpg" alt="Колорпикер цвета булавки" /></td>
-  </tr>
-</table>
-
-### Импорт и настройки
-
-<table>
-  <tr>
-    <td width="50%"><img src="assets/screenshots/import.jpg" alt="Диалог импорта связанных заметок" /></td>
-    <td width="50%"><img src="assets/screenshots/board-settings.jpg" alt="Настройки доски" /></td>
-  </tr>
-</table>
+- **Multiple boards** — each with its own name, theme, camera position and undo history.
+- **Notes, text cards and photographs** pulled from the vault or imported from disk.
+- **Red threads** with dynamic, taut and static physics, sag, auto-tension and subtle sway.
+- **Free-standing tape** — the Tape tool lays strips on cards or directly on an empty board.
+- **Arbitrary tape styling** — colour picker plus length, width and rotation.
+- **Custom pin colour** — theme presets stay, an arbitrary colour is one picker away.
+- **Bare mode** — a note or photograph with no frame, pin or tape.
+- **Loupe** with adjustable magnification, independent of the board zoom.
+- **Smooth navigation** — wheel and trackpad panning, hand tool, eased camera gliding.
+- **Linked-note import** — graph import, recursion, folder, tag and property filters, chain refresh.
+- **Five themes** — cork, dark investigation, concrete, vintage paper, whiteboard.
+- **Custom board backgrounds** with fit and dim controls.
+- **Layout-independent shortcuts** — bindings use the physical key, so Russian and other layouts work.
 
 ---
 
-## 📦 Установка
+## 🖼 Gallery
 
-### Через релиз
+**Dark investigation theme.**
 
-1. Откройте [Releases](https://github.com/ZekiTRR/CaseBoard/releases/latest).
-2. Скачайте `caseboard.zip`.
-3. Распакуйте архив в папку:
+![Dark investigation theme](assets/screenshots/theme-dark.jpg)
+
+**Tape tool and material panel.**
+
+![Tape tool and material panel](assets/screenshots/tape-tool.jpg)
+
+**Loupe with adjustable magnification.**
+
+![Loupe with adjustable magnification](assets/screenshots/loupe.jpg)
+
+**Linked-note import.**
+
+![Linked-note import](assets/screenshots/import.jpg)
+
+**Board settings.**
+
+![Board settings](assets/screenshots/board-settings.jpg)
+
+More looks: [cork](assets/screenshots/hero-cork.jpg), [concrete](assets/screenshots/theme-concrete.jpg), [vintage paper](assets/screenshots/theme-vintage.jpg), [whiteboard](assets/screenshots/theme-whiteboard.jpg), [bare note](assets/screenshots/bare-note.jpg), [pin colour picker](assets/screenshots/pin-color.jpg).
+
+---
+
+## 📦 Installation
+
+### From the community directory
+
+1. Open **Settings → Community plugins → Browse** in Obsidian.
+2. Find **Caseboard** and install it, then enable it.
+
+### From a GitHub release
+
+1. Download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/ZekiTRR/CaseBoard/releases/latest).
+2. Copy all three files into your vault:
 
    ```text
    <vault>/.obsidian/plugins/caseboard/
    ```
 
-4. В Obsidian откройте **Settings → Community plugins** и включите **Caseboard**.
+3. Open **Settings → Community plugins** and enable **Caseboard**.
 
-### Через BRAT
+### With BRAT
 
-1. Установите плагин **BRAT**.
-2. Добавьте экспериментальный репозиторий:
-
-   ```text
-   ZekiTRR/CaseBoard
-   ```
-
-3. Нажмите **Check for updates** и включите плагин.
-
-### Вручную
-
-Склонируйте репозиторий, выполните [сборку](#-сборка) и скопируйте `main.js`, `styles.css` и `manifest.json` в папку плагина.
+Add the experimental repository `ZekiTRR/CaseBoard`, press **Check for updates**, then enable the plugin.
 
 ---
 
-## 🧭 Как пользоваться
+## 🧭 Using the board
 
-- Откройте доску через иконку булавки на левой панели или командой **Open Caseboard**.
-- Добавляйте заметки, текст и фотографии кнопками на нижней панели инструментов.
-- Выберите инструмент **Thread**, затем две карточки, чтобы связать их нитью.
-- Выберите инструмент **Tape** и протяните полосу скотча по доске или поверх любой карточки.
-- Выделите скотч, чтобы открыть панель **Material** и изменить цвет, длину и ширину.
-- Правый клик по карточке открывает режимы материала, цвет булавки, блокировку, порядок и удаление.
+- Open a board from the pin icon in the left ribbon or with the **Open the board** command.
+- Add notes, text and photographs from the toolbar.
+- Pick the **Thread** tool, then click two cards to connect them.
+- Pick the **Tape** tool and drag across the board or over any card; a click lays a short strip.
+- Select a tape strip to open the **Material** panel and change colour, length and width.
+- Right-click a card for material modes, pin colour, lock, z-order and removal.
 
-### Горячие клавиши
+### Shortcuts
 
-| Действие | Клавиша |
+| Action | Key |
 | --- | --- |
-| Выбор | `V` |
-| Рука | `H` |
-| Нить | `C` |
-| Лупа | `Z` |
-| Скотч | `G` |
-| Заметка | `N` |
-| Текстовый блок | `T` |
-| Фотография | `I` |
+| Select | `V` |
+| Hand | `H` |
+| Thread | `C` |
+| Loupe | `Z` |
+| Tape | `G` |
+| Pin note | `N` |
+| Text block | `T` |
+| Photograph | `I` |
 | Focus mode | `F` |
-| Сохранить | `Ctrl + S` |
-| Отменить | `Ctrl + Z` |
-| Повторить | `Ctrl + Shift + Z` |
-| Дублировать | `Ctrl + D` |
-| Удалить | `Delete` |
-| Отмена / закрыть | `Esc` |
-| Вписать доску | `Shift + 1` |
-| Вписать выделение | `Shift + 2` |
-| Приблизить | `+` |
-| Отдалить | `-` |
+| Save | `Ctrl + S` |
+| Undo / redo | `Ctrl + Z` / `Ctrl + Shift + Z` |
+| Duplicate | `Ctrl + D` |
+| Delete | `Delete` |
+| Cancel / close | `Esc` |
+| Zoom to fit / selection | `Shift + 1` / `Shift + 2` |
+| Zoom in / out | `+` / `-` |
 
-Сочетания определяются по физическому положению клавиши, поэтому работают и в русской раскладке.
+Keys are bound to the physical key position, so they keep working in Russian and other layouts.
 
----
-
-## 🗂 Хранение
-
-- Доски сохраняются в виде отдельных JSON-файлов и не изменяют ваши заметки.
-- Папку досок можно выбрать в настройках плагина: **Board folder**.
-- При переносе в другую папку существующие файлы досок автоматически перемещаются.
-- Добавляемые изображения, фон и перетаскиваемые файлы сохраняются в **Attachment folder**.
-- Если папка вложений не указана, Obsidian использует свои настройки вложений.
+The board is desktop-only: it relies on pointer hover, mouse-wheel navigation and the operating-system file picker.
 
 ---
 
-## 🛠 Сборка
+## 🔒 Privacy and storage
 
-Требуется Node.js 20 или новее.
+- **No network access.** The plugin never makes a request, loads no remote code and sends no analytics.
+- **No telemetry, no accounts, no paid features.**
+- Boards are stored as plain JSON files inside your vault, at **Settings → Caseboard → Board folder** (default: `.obsidian/plugins/caseboard/boards`).
+- Images you add, drop or set as a background are copied to **Attachment folder**; leave it empty to follow Obsidian's own attachment settings.
+- Plugin preferences live in `.obsidian/plugins/caseboard/data.json`.
+- Source notes are only ever read. Caseboard writes to board JSON files and to the attachment folder you choose.
+
+---
+
+## 🛠 Build and release
+
+Node.js 20 or newer is required.
 
 ```bash
 npm ci
-npm run build
+npm run build     # typecheck + bundle main.js and styles.css
+npm run lint      # eslint with eslint-plugin-obsidianmd
 ```
 
-После сборки появятся:
+Artifacts are written to the repository root and are intentionally not committed — they ship as release assets:
 
 ```text
 main.js
 styles.css
 ```
 
-Для автоматического релиза создайте тег:
+Cut a version. `npm version` updates `manifest.json`, `package.json` and `versions.json`, then creates a tag without a `v` prefix, which Obsidian requires:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+npm version patch
+git push origin main
+git push origin 1.0.1
 ```
 
-GitHub Actions соберет плагин и опубликует архив `caseboard.zip` в разделе Releases.
+The [release workflow](.github/workflows/release.yml) builds that tag, signs the build provenance and publishes a GitHub release carrying `main.js`, `manifest.json` and `styles.css`.
+
+Submitting the plugin for the community directory happens at [community.obsidian.md](https://community.obsidian.md) — the repository must be public and the release published first.
 
 ---
 
-## 📄 Лицензия
+## 📄 License
 
 [MIT](LICENSE)

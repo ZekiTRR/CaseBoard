@@ -326,7 +326,7 @@ export class BoardRenderer {
 
   private requestFrame(): void {
     if (this.destroyed || this.frame !== null) return;
-    this.frame = requestAnimationFrame((now) => {
+    this.frame = window.requestAnimationFrame((now) => {
       this.frame = null;
       this.tick(now);
     });

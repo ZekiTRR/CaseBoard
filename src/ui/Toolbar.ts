@@ -43,7 +43,7 @@ export class Toolbar {
     this.button(tools, "note", "sticky-note", "Pin note", "N", () => actions.addNote());
     this.button(tools, "text", "type", "Text block", "T", () => actions.addText());
     this.button(tools, "image", "image", "Add photo", "I", (event) =>
-      actions.addImage(event as MouseEvent),
+      actions.addImage(event),
     );
 
     const middle = this.group("actions");

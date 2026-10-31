@@ -69,11 +69,21 @@
 .cb-board-image {
   position: absolute;
   inset: 0;
+  background-image: var(--cb-bg-src, none);
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
   pointer-events: none;
   z-index: 0;
+}
+
+.cb-board-image.is-contain {
+  background-size: contain;
+}
+
+.cb-board-image.is-repeat {
+  background-size: 420px auto;
+  background-repeat: repeat;
 }
 
 .cb-board-image::after {

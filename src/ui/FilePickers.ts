@@ -108,27 +108,26 @@ export class FolderPickerModal extends FuzzySuggestModal<TAbstractFile> {
   }
 
   getItems(): TAbstractFile[] {
-    const root = { path: "", name: "Vault root" } as unknown as TFolder;
     const folders = this.app.vault
       .getAllLoadedFiles()
       .filter((item): item is TFolder => item instanceof TFolder && item.path !== "/");
-    return [root as TAbstractFile, ...folders.sort((a, b) => a.path.localeCompare(b.path))];
+    return [this.app.vault.getRoot(), ...folders.sort((a, b) => a.path.localeCompare(b.path))];
   }
 
   getItemText(item: TAbstractFile): string {
-    return item.path || "Vault root";
+    return folderLabel(item);
   }
 
   override renderSuggestion(item: FuzzyMatch<TAbstractFile>, el: HTMLElement): void {
     const row = el.createDiv({ cls: "cb-suggest-row" });
     setIcon(row.createSpan({ cls: "cb-suggest-icon" }), "folder");
     const text = row.createDiv({ cls: "cb-suggest-text" });
-    text.createDiv({ cls: "cb-suggest-title", text: item.item.name });
-    text.createDiv({ cls: "cb-suggest-path", text: item.item.path || "Vault root" });
+    text.createDiv({ cls: "cb-suggest-title", text: folderLabel(item.item) });
+    text.createDiv({ cls: "cb-suggest-path", text: item.item.path });
   }
 
   onChooseItem(item: TAbstractFile): void {
-    this.onChoose(item.path);
+    this.onChoose(item.path === "/" ? "" : item.path);
   }
 }
 
@@ -200,16 +199,20 @@ function parentOf(path: string): string {
   return index === -1 ? "" : path.slice(0, index);
 }
 
+function folderLabel(item: TAbstractFile): string {
+  return item.path === "/" ? "Vault root" : item.path;
+}
+
 function sanitizeName(name: string): string {
   return name.replace(/[\\/:*?"<>|]/g, "-").trim() || "image";
 }
 
 function chooseFile(): Promise<File | null> {
   return new Promise((resolve) => {
-    const input = document.createElement("input");
+    const input = createEl("input");
     input.type = "file";
     input.accept = "image/*";
-    input.style.display = "none";
+    input.hidden = true;
     document.body.appendChild(input);
     let settled = false;
     const finish = (file: File | null): void => {

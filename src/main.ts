@@ -17,21 +17,21 @@ export default class CaseboardPlugin extends Plugin {
 
     this.registerView(VIEW_TYPE, (leaf) => new CaseboardView(leaf, this.store));
 
-    this.addRibbonIcon("pin", "Open Caseboard", () => {
+    this.addRibbonIcon("pin", "Open the board", () => {
       void this.openCaseboard();
     });
 
     this.addCommand({
-      id: "open-caseboard",
-      name: "Open Caseboard",
+      id: "open",
+      name: "Open the board",
       callback: () => {
         void this.openCaseboard();
       },
     });
 
     this.addCommand({
-      id: "create-caseboard",
-      name: "Create new Caseboard",
+      id: "create",
+      name: "Create a new board",
       callback: () => {
         void this.createAndOpenBoard();
       },
@@ -39,7 +39,7 @@ export default class CaseboardPlugin extends Plugin {
 
     this.addCommand({
       id: "import-linked-notes",
-      name: "Import linked notes to Caseboard",
+      name: "Import linked notes into the board",
       checkCallback: (checking) => {
         const activeView = this.getActiveView();
         const activeFile = this.app.workspace.getActiveFile();
@@ -69,8 +69,8 @@ export default class CaseboardPlugin extends Plugin {
     });
 
     this.addCommand({
-      id: "save-caseboard",
-      name: "Save Caseboard",
+      id: "save",
+      name: "Save the board",
       checkCallback: (checking) => {
         const view = this.getActiveView();
         if (!view) return false;

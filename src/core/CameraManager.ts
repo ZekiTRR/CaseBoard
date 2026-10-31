@@ -201,12 +201,12 @@ export class CameraManager {
       this.apply();
       this.onZoom(this.state.zoom);
       if (t < 1) {
-        this.tween = requestAnimationFrame(tick);
+        this.tween = window.requestAnimationFrame(tick);
       } else {
         this.tween = null;
       }
     };
-    this.tween = requestAnimationFrame(tick);
+    this.tween = window.requestAnimationFrame(tick);
   }
 
   cancelTween(): void {
@@ -254,9 +254,9 @@ export class CameraManager {
         this.elements.root.classList.remove("is-camera-gliding");
         return;
       }
-      this.glideFrame = requestAnimationFrame(step);
+      this.glideFrame = window.requestAnimationFrame(step);
     };
-    this.glideFrame = requestAnimationFrame(step);
+    this.glideFrame = window.requestAnimationFrame(step);
   }
 
   apply(): void {
