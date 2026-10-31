@@ -1,0 +1,9 @@
+{
+  "id": "caseboard",
+  "name": "Caseboard",
+  "version": "1.0.0",
+  "minAppVersion": "1.5.0",
+  "description": "A cinematic detective investigation board: pin notes, photographs and evidence, connect them with red threads, and import linked notes from your vault.",
+  "author": "YOKOSHIP",
+  "isDesktopOnly": true
+}

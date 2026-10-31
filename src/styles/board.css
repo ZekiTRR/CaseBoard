@@ -1,0 +1,229 @@
+.cb-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: default;
+}
+
+.cb-stage.is-space-pan {
+  cursor: grab;
+}
+
+.cb-stage.is-panning {
+  cursor: grabbing !important;
+}
+
+.cb-stage.is-placing-tape {
+  cursor: crosshair !important;
+}
+
+.cb-tape-preview {
+  position: absolute;
+  z-index: 12;
+  border-radius: 2px;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.18),
+      transparent 14%,
+      transparent 86%,
+      rgba(255, 255, 255, 0.12)
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0.08));
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+  transform-origin: 0 50%;
+  pointer-events: none;
+  opacity: 0.78;
+}
+
+.caseboard-root[data-tool="thread"] .cb-stage {
+  cursor: crosshair;
+}
+
+.caseboard-root[data-tool="pan"] .cb-stage {
+  cursor: grab;
+}
+
+.caseboard-root[data-tool="tape"] .cb-stage {
+  cursor: crosshair;
+}
+
+.cb-stage.is-disabled {
+  pointer-events: none;
+}
+
+.cb-surface {
+  position: absolute;
+  inset: 0;
+  background-color: var(--cb-surface-base);
+  background-image: var(--cb-surface-texture);
+  background-repeat: repeat;
+  background-position: 0 0;
+  background-size: 512px 512px;
+  will-change: background-position, background-size;
+}
+
+.cb-board-image {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cb-board-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 7, 6, var(--cb-bg-dim, 0.3));
+  pointer-events: none;
+}
+
+.cb-camera {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.cb-threads {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.cb-nodes,
+.cb-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.cb-vignette {
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 78% at 50% 42%, transparent 38%, var(--cb-vignette) 118%);
+}
+
+.cb-light {
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 50% at 24% 6%, var(--cb-light), transparent 62%);
+  mix-blend-mode: screen;
+}
+
+.cb-stage.is-drop-target::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1.5px dashed color-mix(in srgb, var(--cb-selection) 55%, transparent);
+  border-radius: 14px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--cb-selection) 4%, transparent);
+  z-index: 5;
+}
+
+/* threads --------------------------------------------------------------- */
+
+.cb-thread-shadow {
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.cb-thread-main {
+  pointer-events: none;
+  transition: filter 0.12s ease;
+}
+
+.cb-thread:hover .cb-thread-main {
+  filter: brightness(1.12) saturate(1.05);
+}
+
+.cb-thread.is-selected .cb-thread-main {
+  filter: brightness(1.18) drop-shadow(0 0 3px color-mix(in srgb, var(--cb-selection) 55%, transparent));
+}
+
+.cb-thread-hit {
+  cursor: pointer;
+}
+
+.cb-thread-dot {
+  opacity: 0;
+  stroke: color-mix(in srgb, var(--cb-surface-base) 70%, white);
+  stroke-width: 0.9;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.cb-thread.is-selected .cb-thread-dot {
+  opacity: 1;
+}
+
+.cb-thread-preview-path {
+  stroke: var(--cb-accent);
+  stroke-width: 1.7;
+  stroke-dasharray: 6 6;
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0.85;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+  animation: cb-thread-march 1.2s linear infinite;
+}
+
+.cb-thread-preview-dot {
+  fill: var(--cb-accent);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+@keyframes cb-thread-march {
+  to { stroke-dashoffset: -24; }
+}
+
+/* selection ------------------------------------------------------------- */
+
+.cb-group-frame {
+  position: absolute;
+  border: 1.5px dashed color-mix(in srgb, var(--cb-selection) 78%, transparent);
+  border-radius: 9px;
+  pointer-events: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cb-selection) 8%, transparent);
+}
+
+.cb-marquee {
+  position: absolute;
+  border: 1px solid var(--cb-selection);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--cb-selection) 10%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cb-selection) 5%, transparent);
+  pointer-events: none;
+  z-index: 17;
+}
+
+/* cursor states during direct manipulation */
+.cb-stage.is-dragging,
+.cb-stage.is-transforming {
+  cursor: grabbing;
+}
+
+.caseboard-root[data-lod="far"] .cb-group-frame {
+  border-width: 2.5px;
+}

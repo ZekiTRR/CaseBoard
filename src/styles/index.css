@@ -1,0 +1,94 @@
+@import "./board.css";
+@import "./nodes.css";
+@import "./ui.css";
+@import "./themes.css";
+@import "./loupe.css";
+
+.caseboard-content {
+  position: relative;
+  height: 100%;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #121212;
+}
+
+.caseboard-root {
+  --cb-font-ui: var(--font-interface, "Segoe UI", system-ui, -apple-system, sans-serif);
+  --cb-font-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --cb-font-hand: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+  --cb-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  outline: none;
+  color: var(--cb-ui-text);
+  font-family: var(--cb-font-ui);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.caseboard-root [hidden],
+.caseboard-modal [hidden] {
+  display: none !important;
+}
+
+.caseboard-root button,
+.caseboard-modal button {
+  font-family: inherit;
+}
+
+.caseboard-root button:focus-visible,
+.caseboard-modal button:focus-visible,
+.caseboard-root input:focus-visible,
+.caseboard-modal input:focus-visible,
+.caseboard-root select:focus-visible,
+.caseboard-modal select:focus-visible,
+.caseboard-root textarea:focus-visible,
+.caseboard-modal textarea:focus-visible {
+  outline: 2px solid var(--cb-selection);
+  outline-offset: 2px;
+}
+
+.caseboard-root[data-ui="dark"],
+.caseboard-modal[data-ui="dark"] {
+  color-scheme: dark;
+}
+
+.caseboard-root[data-ui="light"],
+.caseboard-modal[data-ui="light"] {
+  color-scheme: light;
+}
+
+body.caseboard-focus-mode .workspace-ribbon,
+body.caseboard-focus-mode .status-bar {
+  display: none !important;
+}
+
+body.caseboard-focus-mode .workspace-leaf.mod-active .view-header {
+  display: none !important;
+}
+
+@keyframes cb-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes cb-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@keyframes cb-blink {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+@keyframes cb-fade-up {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+::selection {
+  background: color-mix(in srgb, var(--cb-selection) 35%, transparent);
+}

@@ -1,0 +1,19 @@
+node_modules/
+dist/
+caseboard.zip
+
+# Obsidian runtime data
+data.json
+boards/
+
+# Build output is published through GitHub Releases
+main.js
+styles.css
+*.map
+
+# Local development artifacts
+dev/harness.js
+dev/harness.css
+dev/gallery/
+dev/shots/
+*.log

@@ -1,0 +1,111 @@
+.cb-loupe {
+  position: fixed;
+  z-index: 1200;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: drop-shadow(0 24px 46px rgba(0, 0, 0, 0.45));
+  font-family: var(--cb-font-ui);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: visible;
+}
+
+.cb-loupe * {
+  pointer-events: none !important;
+}
+
+.cb-loupe-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--cb-surface-base, #2a2a2a);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 0 26px rgba(0, 0, 0, 0.16);
+}
+
+.cb-loupe-host {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.cb-loupe-surface {
+  pointer-events: none;
+}
+
+.cb-loupe-background {
+  position: absolute;
+  pointer-events: none;
+}
+
+.cb-loupe-camera {
+  pointer-events: none;
+}
+
+.cb-loupe .cb-handles,
+.cb-loupe .cb-selection-frame,
+.cb-loupe .cb-lock-badge,
+.cb-loupe .cb-size-badge,
+.cb-loupe .cb-tape-handle,
+.cb-loupe .cb-tape-rotate {
+  display: none !important;
+}
+
+.cb-loupe .cb-image {
+  transition: none;
+}
+
+.cb-loupe-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 2px solid rgba(255, 255, 255, 0.34);
+  background:
+    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.24), transparent 34%),
+    radial-gradient(circle at 72% 86%, rgba(255, 255, 255, 0.06), transparent 40%),
+    linear-gradient(142deg, rgba(255, 255, 255, 0.12), transparent 42%);
+  box-shadow:
+    inset 0 0 22px rgba(255, 255, 255, 0.08),
+    0 0 0 3px rgba(16, 12, 8, 0.18),
+    0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.cb-loupe-glass::after {
+  content: "";
+  position: absolute;
+  left: 22%;
+  top: 12%;
+  width: 30%;
+  height: 16%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  filter: blur(6px);
+  transform: rotate(-24deg);
+}
+
+.cb-loupe-scale {
+  position: absolute;
+  left: 50%;
+  bottom: -24px;
+  transform: translateX(-50%);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--cb-ui-bg);
+  border: 1px solid var(--cb-ui-border);
+  color: var(--cb-ui-muted);
+  font-family: var(--cb-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+}
