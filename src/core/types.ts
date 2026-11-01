@@ -17,16 +17,14 @@ export type ThreadMode = "dynamic" | "taut" | "static";
 export type AnchorKind = "auto" | "pin" | "tape" | "top" | "right" | "bottom" | "left";
 export type FastenerKind = "pin" | "tape";
 
-/** The six drawings a recording card can wear. */
-export type VoiceStyle = "reel" | "seal" | "analyzer" | "recorder" | "sleeve" | "dial";
+/** The four drawings a recording card can wear. */
+export type VoiceStyle = "reel" | "analyzer" | "sleeve" | "dial";
 
-export const VOICE_STYLES: VoiceStyle[] = ["reel", "seal", "analyzer", "recorder", "sleeve", "dial"];
+export const VOICE_STYLES: VoiceStyle[] = ["reel", "analyzer", "sleeve", "dial"];
 
 export const VOICE_STYLE_LABELS: Record<VoiceStyle, string> = {
   reel: "Reel",
-  seal: "Wax seal",
   analyzer: "Analyzer",
-  recorder: "Wiretap strip",
   sleeve: "Evidence sleeve",
   dial: "Receiver dial",
 };

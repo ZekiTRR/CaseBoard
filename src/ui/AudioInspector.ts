@@ -23,10 +23,8 @@ const STAMP_MAX = 3;
 
 const STYLE_HINTS: Record<VoiceStyle, string> = {
   reel: "Two reels and a tape band; the take winds from one spool to the other.",
-  seal: "A wax seal with the triangle pressed into it and a ring of progress.",
-  analyzer: "Graph paper, a red cue in a thin ring, played bars in red.",
-  recorder: "A perforated wiretap strip drawn as one continuous ink trace.",
-  sleeve: "An evidence sleeve that swallows the tape as the take is heard.",
+  analyzer: "Graph paper and a red cue in a thin ring; played bars turn red.",
+  sleeve: "An evidence sleeve: the tape slides back into the file as the take is heard.",
   dial: "A receiver dial: passed ticks light up, the knob turns with progress.",
 };
 

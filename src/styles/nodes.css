@@ -1070,6 +1070,9 @@
 /* voice note ------------------------------------------------------------ */
 
 .cb-audio {
+  /* distance from the waveform's left edge back to the card's inner edge */
+  --cb-audio-lead: calc(var(--cb-audio-mark, 32px) + 11px * var(--cb-audio-scale, 1));
+
   position: absolute;
   inset: 0;
   display: flex;
@@ -1077,21 +1080,6 @@
   gap: 8px;
   min-height: 0;
   padding: 1px;
-}
-
-.cb-audio-scene {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.cb-audio-head,
-.cb-audio-main,
-.cb-audio-note,
-.cb-audio-missing {
-  position: relative;
-  z-index: 1;
 }
 
 .cb-audio-head {
@@ -1152,19 +1140,24 @@
   50% { height: 11px; }
 }
 
+/* The mark and the waveform share one axis: the mark is nudged so that its own
+   centre lands on the waveform row, not on the row plus the time line. */
 .cb-audio-main {
-  display: flex;
-  align-items: center;
-  gap: calc(11px * var(--cb-audio-scale, 1));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: calc(11px * var(--cb-audio-scale, 1));
+  align-items: start;
   flex: 1;
   min-height: 0;
 }
 
 .cb-audio-play {
   position: relative;
-  flex: none;
+  z-index: 3;
+  grid-column: 1;
   width: var(--cb-audio-mark, 32px);
   height: var(--cb-audio-mark, 32px);
+  margin-top: calc((38px * var(--cb-audio-scale, 1) - var(--cb-audio-mark, 32px)) / 2);
   padding: 0;
   border: 0;
   background: transparent;
@@ -1187,28 +1180,63 @@
   transform: scale(0.94);
 }
 
-/* mark strokes and fills, shared by all six drawings -------------------------------- */
+.cb-audio-box {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.cb-audio-wave {
+  position: relative;
+  height: calc(38px * var(--cb-audio-scale, 1));
+  cursor: pointer;
+}
+
+.cb-audio-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cb-audio-bars {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  padding-right: var(--cb-audio-tail, 0px);
+}
+
+.cb-audio-bars::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: var(--cb-audio-tail, 0px);
+  top: 50%;
+  border-top: 1px dotted color-mix(in srgb, var(--card-ink) 15%, transparent);
+}
+
+/* mark strokes and fills, shared by the four drawings ------------------------- */
 
 .cb-voice-play,
 .cb-voice-pause,
-.cb-voice-wax,
 .cb-voice-tab,
 .cb-voice-knob {
   fill: var(--cb-node-accent);
 }
 
-.cb-voice-wax-deep {
-  fill: color-mix(in srgb, var(--card-ink) 22%, transparent);
-}
-
-.cb-voice-emboss {
-  fill: color-mix(in srgb, var(--card-ink) 34%, transparent);
-}
-
-.cb-voice-tab-ink,
-.cb-voice-notch {
+.cb-voice-tab-ink {
   fill: var(--card-bg);
+}
+
+.cb-voice-notch {
   stroke: var(--card-bg);
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 
 .cb-voice-tab {
@@ -1216,12 +1244,11 @@
   stroke-width: 1;
 }
 
-.cb-voice-frame,
 .cb-voice-cue-ring {
   fill: none;
   stroke: var(--cb-node-accent);
   stroke-width: 1.6;
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
 .cb-voice-stamped {
@@ -1249,19 +1276,6 @@
   fill: none;
   stroke: color-mix(in srgb, var(--card-ink) 45%, transparent);
   stroke-width: 1.4;
-  stroke-linecap: round;
-}
-
-.cb-voice-track {
-  fill: none;
-  stroke: color-mix(in srgb, var(--card-ink) 16%, transparent);
-  stroke-width: 2.4;
-}
-
-.cb-voice-ring {
-  fill: none;
-  stroke: var(--cb-node-accent);
-  stroke-width: 2.4;
   stroke-linecap: round;
 }
 
@@ -1324,33 +1338,6 @@
 
 /* waveform --------------------------------------------------------------- */
 
-.cb-audio-box {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.cb-audio-wave {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  height: calc(38px * var(--cb-audio-scale, 1));
-  cursor: pointer;
-}
-
-.cb-audio-wave::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  border-top: 1px dotted color-mix(in srgb, var(--card-ink) 15%, transparent);
-}
-
 .cb-audio-bar {
   position: relative;
   flex: 1;
@@ -1367,9 +1354,10 @@
 
 .cb-audio-cue {
   position: absolute;
+  z-index: 4;
   top: -2px;
   bottom: -2px;
-  left: var(--cb-audio-cue, 0%);
+  left: calc((100% - var(--cb-audio-tail, 0px)) * var(--cb-audio-cue, 0));
   width: 1px;
   margin-left: -0.5px;
   background: color-mix(in srgb, var(--card-ink) 40%, transparent);
@@ -1432,8 +1420,7 @@
   color: var(--cb-accent);
 }
 
-.cb-audio.is-missing .cb-audio-bar,
-.cb-audio.is-missing .cb-audio-ink {
+.cb-audio.is-missing .cb-audio-bar {
   opacity: 0.45;
 }
 
@@ -1464,8 +1451,8 @@
 
 .cb-audio[data-voice="reel"] .cb-audio-band {
   position: absolute;
-  left: 6px;
-  right: 6px;
+  left: calc(-1 * var(--cb-audio-lead) - 6px);
+  right: -6px;
   top: calc(50% - 30px * var(--cb-audio-scale, 1));
   height: calc(60px * var(--cb-audio-scale, 1));
   border-radius: 5px;
@@ -1476,142 +1463,61 @@
 
 .cb-audio[data-voice="reel"] .cb-audio-reel-right {
   position: absolute;
-  right: calc(10px + 4px * var(--cb-audio-scale, 1));
+  right: calc(8px * var(--cb-audio-scale, 1));
   top: calc(50% - 22px * var(--cb-audio-scale, 1));
   width: calc(44px * var(--cb-audio-scale, 1));
   height: calc(44px * var(--cb-audio-scale, 1));
+  display: block;
 }
 
-.cb-audio[data-voice="reel"] .cb-audio-box {
-  padding-right: var(--cb-audio-tail, 0px);
-}
-
-/* B · seal ------------------------------------------------------------------ */
-
-.cb-audio[data-voice="seal"] .cb-audio-bar {
-  min-width: 1px;
-  border-radius: 0;
-}
-
-.cb-audio[data-voice="seal"] .cb-audio-wave {
-  gap: 1px;
+.cb-audio[data-voice="reel"][data-state="playing"] .cb-audio-reel-right .cb-voice-spin {
+  animation: cb-voice-spin 2.4s linear infinite;
 }
 
 /* C · analyzer -------------------------------------------------------------- */
 
-.cb-audio[data-voice="analyzer"] .cb-audio-grid {
-  position: absolute;
-  inset: 2px;
-  border-radius: 3px;
+.cb-audio[data-voice="analyzer"] {
   background-image:
     repeating-linear-gradient(to right, color-mix(in srgb, var(--card-ink) 8%, transparent) 0 1px, transparent 1px 9px),
     repeating-linear-gradient(to bottom, color-mix(in srgb, var(--card-ink) 8%, transparent) 0 1px, transparent 1px 9px);
+  border-radius: 3px;
 }
 
-/* D · recorder strip -------------------------------------------------------- */
+/* E · evidence sleeve — the take slides back into the file as it is heard ------ */
 
-.cb-audio[data-voice="recorder"] .cb-audio-perf {
+.cb-audio[data-voice="sleeve"] .cb-audio-strip {
   position: absolute;
-  left: 4px;
-  right: 4px;
-  height: 6px;
-  background-image: radial-gradient(closest-side, color-mix(in srgb, var(--card-ink) 30%, var(--card-bg)) 92%, transparent 100%);
-  background-size: 20px 6px;
-  background-repeat: repeat-x;
-}
-
-.cb-audio[data-voice="recorder"] .cb-audio-perf.is-top {
-  top: 3px;
-}
-
-.cb-audio[data-voice="recorder"] .cb-audio-perf.is-bottom {
-  bottom: 3px;
-}
-
-.cb-audio[data-voice="recorder"] .cb-audio-margin {
-  position: absolute;
-  left: calc(52px * var(--cb-audio-scale, 1));
-  top: 12px;
-  bottom: 12px;
-  border-left: 1px solid color-mix(in srgb, var(--cb-node-accent) 40%, transparent);
-}
-
-.cb-audio[data-voice="recorder"] .cb-audio-play {
-  margin-left: calc(10px * var(--cb-audio-scale, 1));
-}
-
-.cb-audio-ink {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.cb-voice-ink {
-  fill: none;
-  stroke: color-mix(in srgb, var(--card-ink) 34%, transparent);
-  stroke-width: 1.4;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-}
-
-.cb-voice-ink.is-played {
-  stroke: var(--cb-node-accent);
-}
-
-/* E · evidence sleeve ------------------------------------------------------- */
-
-.cb-audio[data-voice="sleeve"] .cb-audio-box::before {
-  content: "";
-  position: absolute;
-  left: calc(-26px * var(--cb-audio-scale, 1));
-  right: var(--cb-audio-pull, 0%);
-  top: calc(-3px * var(--cb-audio-scale, 1));
-  height: calc(44px * var(--cb-audio-scale, 1));
+  left: calc(-1 * var(--cb-audio-lead));
+  right: 0;
+  top: calc(50% - 20px * var(--cb-audio-scale, 1));
+  height: calc(40px * var(--cb-audio-scale, 1));
   border-radius: 2px;
-  background: color-mix(in srgb, var(--cb-node-accent) 16%, var(--card-bg));
-  border: 1px solid color-mix(in srgb, var(--card-ink) 18%, transparent);
-}
-
-.cb-audio[data-voice="sleeve"] .cb-audio-wave {
-  overflow: hidden;
-}
-
-.cb-audio[data-voice="sleeve"] .cb-audio-bar {
-  transform: translateX(calc(-1 * var(--cb-audio-pull, 0%)));
+  background: color-mix(in srgb, var(--cb-node-accent) 14%, var(--card-bg));
+  border: 1px solid color-mix(in srgb, var(--card-ink) 16%, transparent);
 }
 
 .cb-audio[data-voice="sleeve"] .cb-audio-sleeve {
   position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: calc(15px + 46px * var(--cb-audio-scale, 1));
+  z-index: 2;
+  left: calc(-1 * var(--cb-audio-lead));
+  top: calc(50% - 24px * var(--cb-audio-scale, 1));
+  height: calc(48px * var(--cb-audio-scale, 1));
+  width: calc(var(--cb-audio-lead) + var(--cb-audio-pull, 0%));
   border-radius: 2px;
-  background: color-mix(in srgb, var(--card-ink) 7%, var(--card-bg));
-  border: 1px solid color-mix(in srgb, var(--card-ink) 16%, transparent);
-}
-
-.cb-audio[data-voice="sleeve"] .cb-audio-slit {
-  position: absolute;
-  left: 6px;
-  right: 4px;
-  top: 14px;
-  border-top: 1px dashed color-mix(in srgb, var(--card-ink) 26%, transparent);
-}
-
-.cb-audio[data-voice="sleeve"] .cb-audio-play {
-  margin-left: calc(26px * var(--cb-audio-scale, 1));
+  background: color-mix(in srgb, var(--card-ink) 9%, var(--card-bg));
+  border-right: 1px solid color-mix(in srgb, var(--card-ink) 26%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--card-ink) 14%, transparent);
+  pointer-events: none;
 }
 
 /* F · receiver dial --------------------------------------------------------- */
 
 .cb-audio[data-voice="dial"] .cb-audio-panel {
   position: absolute;
-  left: 6px;
-  right: 6px;
-  top: calc(50% - 34px * var(--cb-audio-scale, 1));
-  height: calc(68px * var(--cb-audio-scale, 1));
+  left: calc(-1 * var(--cb-audio-lead) - 6px);
+  right: -6px;
+  top: calc(50% - 30px * var(--cb-audio-scale, 1));
+  height: calc(60px * var(--cb-audio-scale, 1));
   border-radius: 5px;
   background: color-mix(in srgb, var(--card-ink) 8%, var(--card-bg));
   border: 1px solid color-mix(in srgb, var(--card-ink) 16%, transparent);
@@ -1619,26 +1525,21 @@
 
 .cb-audio[data-voice="dial"] .cb-audio-ripples {
   position: absolute;
-  right: calc(14px * var(--cb-audio-scale, 1));
+  right: calc(6px * var(--cb-audio-scale, 1));
   top: calc(50% - 22px * var(--cb-audio-scale, 1));
   width: calc(30px * var(--cb-audio-scale, 1));
   height: calc(44px * var(--cb-audio-scale, 1));
+  display: block;
 }
 
-.cb-audio[data-voice="dial"] .cb-audio-play {
-  margin-left: calc(6px * var(--cb-audio-scale, 1));
-}
-
-.cb-audio[data-voice="dial"] .cb-audio-box {
-  padding-right: var(--cb-audio-tail, 0px);
-}
-
-.cb-audio[data-voice="dial"] .cb-audio-bar {
+.cb-audio[data-voice="dial"] .cb-audio-bar,
+.cb-audio[data-voice="sleeve"] .cb-audio-bar {
   min-width: 1px;
   border-radius: 0;
 }
 
-.cb-audio[data-voice="dial"] .cb-audio-wave {
+.cb-audio[data-voice="dial"] .cb-audio-bars,
+.cb-audio[data-voice="sleeve"] .cb-audio-bars {
   gap: 1px;
 }
 

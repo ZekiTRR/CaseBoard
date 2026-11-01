@@ -14,14 +14,11 @@ const BAR_PITCH = 5;
 const CARD_PADDING = 15;
 const MIN_BARS = 12;
 const MAX_BARS = 84;
-const INK_POINTS = 96;
 
 /** The mark's own box in card units, per style. */
 const MARK_SIZE: Record<VoiceStyle, number> = {
   reel: 44,
-  seal: 60,
   analyzer: 32,
-  recorder: 30,
   sleeve: 40,
   dial: 38,
 };
@@ -29,9 +26,7 @@ const MARK_SIZE: Record<VoiceStyle, number> = {
 /** Room the scene needs at the right of the waveform (second reel, broadcast rings). */
 const SCENE_TAIL: Record<VoiceStyle, number> = {
   reel: 52,
-  seal: 0,
   analyzer: 0,
-  recorder: 0,
   sleeve: 0,
   dial: 36,
 };
@@ -45,23 +40,66 @@ function svg(tag: string, attrs: Record<string, string | number>, cls = ""): SVG
   return node;
 }
 
-/** Wax that cooled into a scalloped blob rather than a perfect disc. */
-function waxPath(cx: number, cy: number, radius: number): string {
-  const parts: string[] = [];
-  for (let index = 0; index < 72; index++) {
-    const angle = (index / 72) * Math.PI * 2;
-    const reach =
-      radius + radius * 0.09 * Math.sin(angle * 5) + radius * 0.05 * Math.sin(angle * 3 + 1.2);
-    parts.push(
-      `${index ? "L" : "M"}${(cx + Math.cos(angle) * reach).toFixed(2)} ${(cy + Math.sin(angle) * reach).toFixed(2)}`,
-    );
-  }
-  return parts.join(" ") + " Z";
+function spokes(half: number, reach: number): SVGElement {
+  const group = svg("g", {}, "cb-voice-spin");
+  group.append(
+    svg("path", { d: `M${half} ${half - reach} V${half + reach}` }, "cb-voice-spoke"),
+    svg(
+      "path",
+      {
+        d: `M${(half - reach * 0.87).toFixed(2)} ${(half - reach * 0.5).toFixed(2)} L${(half + reach * 0.87).toFixed(2)} ${(half + reach * 0.5).toFixed(2)}`,
+      },
+      "cb-voice-spoke",
+    ),
+    svg(
+      "path",
+      {
+        d: `M${(half - reach * 0.87).toFixed(2)} ${(half + reach * 0.5).toFixed(2)} L${(half + reach * 0.87).toFixed(2)} ${(half - reach * 0.5).toFixed(2)}`,
+      },
+      "cb-voice-spoke",
+    ),
+  );
+  return group;
+}
+
+function reel(half: number, wound: number): { node: SVGElement; woundEl: SVGCircleElement } {
+  const woundEl = svg("circle", { cx: half, cy: half, r: wound }, "cb-voice-wound") as SVGCircleElement;
+  const node = svg("svg", { viewBox: `0 0 ${half * 2} ${half * 2}`, "aria-hidden": "true" });
+  node.append(
+    woundEl,
+    svg("circle", { cx: half, cy: half, r: half - 2 }, "cb-voice-rim"),
+    spokes(half, half - 5),
+    svg("circle", { cx: half, cy: half, r: 5 }, "cb-voice-hub"),
+  );
+  return { node, woundEl };
+}
+
+function glyphs(half: number, arm: number, spread: number, cls = ""): SVGElement {
+  const prefix = cls ? `${cls} ` : "";
+  const group = svg("g", {});
+  group.append(
+    svg(
+      "path",
+      {
+        d: `M${(half - arm * 0.7).toFixed(2)} ${half - spread} L${half + arm} ${half} L${(half - arm * 0.7).toFixed(2)} ${half + spread} Z`,
+      },
+      `${prefix}cb-voice-play`,
+    ),
+    (() => {
+      const pause = svg("g", {}, `${prefix}cb-voice-pause`);
+      pause.append(
+        svg("rect", { x: half - arm, y: half - spread, width: arm * 0.62, height: spread * 2, rx: 1.4 }, ""),
+        svg("rect", { x: half + arm * 0.38, y: half - spread, width: arm * 0.62, height: spread * 2, rx: 1.4 }, ""),
+      );
+      return pause;
+    })(),
+  );
+  return group;
 }
 
 /**
- * The voice-note card. It can wear six different drawings — reel, seal, analyzer,
- * recorder strip, evidence sleeve, receiver dial — picked per card in the panel.
+ * The voice-note card. It can wear four drawings — reel, analyzer, evidence sleeve,
+ * receiver dial — picked per card in the Recording panel.
  */
 export class AudioCard {
   readonly el: HTMLElement;
@@ -69,8 +107,9 @@ export class AudioCard {
   private readonly stampEl: HTMLElement;
   private readonly eqEl: HTMLElement;
   private readonly playEl: HTMLElement;
-  private readonly sceneEl: HTMLElement;
   private readonly waveEl: HTMLElement;
+  private readonly sceneEl: HTMLElement;
+  private readonly barsEl: HTMLElement;
   private readonly cueEl: HTMLElement;
   private readonly currentEl: HTMLElement;
   private readonly totalEl: HTMLElement;
@@ -78,10 +117,8 @@ export class AudioCard {
   private readonly missingEl: HTMLElement;
   private bars: HTMLElement[] = [];
   private barCount = 0;
-  private inkPlayed: SVGPathElement | null = null;
   private woundLeft: SVGCircleElement | null = null;
   private woundRight: SVGCircleElement | null = null;
-  private sealRing: SVGCircleElement | null = null;
   private style: VoiceStyle | null = null;
   private ratio = 0;
   private node: AudioBoardNode;
@@ -89,8 +126,6 @@ export class AudioCard {
   constructor(node: AudioBoardNode, private readonly host: AudioCardHost) {
     this.node = node;
     this.el = createDiv({ cls: "cb-audio" });
-
-    this.sceneEl = this.el.createDiv({ cls: "cb-audio-scene", attr: { "aria-hidden": "true" } });
 
     this.headEl = this.el.createDiv({ cls: "cb-audio-head" });
     this.eqEl = this.headEl.createSpan({ cls: "cb-audio-eq" });
@@ -112,6 +147,8 @@ export class AudioCard {
 
     const box = main.createDiv({ cls: "cb-audio-box" });
     this.waveEl = box.createDiv({ cls: "cb-audio-wave", attr: { "data-audio-control": "wave" } });
+    this.sceneEl = this.waveEl.createDiv({ cls: "cb-audio-scene", attr: { "aria-hidden": "true" } });
+    this.barsEl = this.waveEl.createDiv({ cls: "cb-audio-bars" });
     this.cueEl = this.waveEl.createDiv({ cls: "cb-audio-cue" });
     this.cueEl.hidden = true;
     const times = box.createDiv({ cls: "cb-audio-times" });
@@ -141,48 +178,32 @@ export class AudioCard {
     this.el.dataset.voice = style;
     this.sceneEl.empty();
     this.playEl.empty();
-    this.waveEl.empty();
-    this.waveEl.appendChild(this.cueEl);
+    this.barsEl.empty();
+    for (const child of Array.from(this.waveEl.children)) {
+      if (child !== this.sceneEl && child !== this.barsEl && child !== this.cueEl) child.remove();
+    }
     this.bars = [];
     this.barCount = 0;
-    this.inkPlayed = null;
     this.woundLeft = null;
     this.woundRight = null;
-    this.sealRing = null;
     this.buildMark(style);
     this.buildScene(style);
   }
 
   private buildMark(style: VoiceStyle): void {
     const box = MARK_SIZE[style];
-    const mark = svg("svg", { viewBox: `0 0 ${box} ${box}`, "aria-hidden": "true" });
     const half = box / 2;
+    const mark = svg("svg", { viewBox: `0 0 ${box} ${box}`, "aria-hidden": "true" });
 
     if (style === "reel") {
       this.woundLeft = svg("circle", { cx: half, cy: half, r: 18 }, "cb-voice-wound") as SVGCircleElement;
       mark.append(
         this.woundLeft,
-        svg("circle", { cx: half, cy: half, r: 20 }, "cb-voice-rim"),
-        this.spokes(half, 17),
+        svg("circle", { cx: half, cy: half, r: half - 2 }, "cb-voice-rim"),
+        spokes(half, half - 5),
         svg("circle", { cx: half, cy: half, r: 5 }, "cb-voice-hub"),
+        glyphs(half, 5.4, 8.2),
       );
-      mark.appendChild(this.glyphs(half, 5.4, 8.2));
-    } else if (style === "seal") {
-      this.sealRing = svg("circle", {
-        cx: half,
-        cy: half,
-        r: 30,
-        pathLength: 100,
-        "stroke-dasharray": "0 100",
-        transform: "rotate(-90 32 32)",
-      }, "cb-voice-ring") as SVGCircleElement;
-      mark.append(
-        svg("circle", { cx: half, cy: half, r: 30 }, "cb-voice-track"),
-        this.sealRing,
-        svg("path", { d: waxPath(half, half, 22) }, "cb-voice-wax"),
-        svg("circle", { cx: half, cy: half, r: 15 }, "cb-voice-wax-deep"),
-      );
-      mark.appendChild(this.glyphs(half, 7, 11, "cb-voice-emboss"));
     } else if (style === "dial") {
       const turn = svg("g", {}, "cb-voice-turn");
       turn.append(
@@ -191,89 +212,27 @@ export class AudioCard {
       );
       mark.append(svg("circle", { cx: half, cy: half, r: 18 }, "cb-voice-knob-ring"), turn);
     } else if (style === "sleeve") {
-      mark.append(
-        svg("path", { d: `M4 9 H36 V31 H4 Z` }, "cb-voice-tab"),
-        ...this.glyphParts(half, 5.6, 8.4, "cb-voice-tab-ink"),
-      );
-    } else if (style === "recorder") {
-      mark.append(svg("rect", { x: 2.5, y: 2.5, width: box - 5, height: box - 5, rx: 4 }, "cb-voice-frame"));
-      mark.appendChild(this.glyphs(half, 5.2, 8.2, "cb-voice-stamped"));
+      mark.append(svg("path", { d: "M4 9 H36 V31 H4 Z" }, "cb-voice-tab"));
+      mark.appendChild(glyphs(half, 5.6, 8.4, "cb-voice-tab-ink"));
     } else {
       mark.append(svg("circle", { cx: half, cy: half, r: 14 }, "cb-voice-cue-ring"));
-      mark.appendChild(this.glyphs(half, 5, 7.8, "cb-voice-stamped"));
+      mark.appendChild(glyphs(half, 5, 7.8, "cb-voice-stamped"));
     }
 
     this.playEl.appendChild(mark);
   }
 
-  private spokes(half: number, reach: number): SVGElement {
-    const group = svg("g", {}, "cb-voice-spin");
-    group.append(
-      svg("path", { d: `M${half} ${half - reach} V${half + reach}` }, "cb-voice-spoke"),
-      svg(
-        "path",
-        {
-          d: `M${(half - reach * 0.87).toFixed(2)} ${(half - reach * 0.5).toFixed(2)} L${(half + reach * 0.87).toFixed(2)} ${(half + reach * 0.5).toFixed(2)}`,
-        },
-        "cb-voice-spoke",
-      ),
-      svg(
-        "path",
-        {
-          d: `M${(half - reach * 0.87).toFixed(2)} ${(half + reach * 0.5).toFixed(2)} L${(half + reach * 0.87).toFixed(2)} ${(half - reach * 0.5).toFixed(2)}`,
-        },
-        "cb-voice-spoke",
-      ),
-    );
-    return group;
-  }
-
-  private glyphs(half: number, arm: number, spread: number, cls = ""): SVGElement {
-    const [play, pause] = this.glyphParts(half, arm, spread, cls);
-    const group = svg("g", {});
-    group.append(play, pause);
-    return group;
-  }
-
-  private glyphParts(half: number, arm: number, spread: number, cls = ""): [SVGElement, SVGElement] {
-    const prefix = cls ? `${cls} ` : "";
-    const play = svg(
-      "path",
-      {
-        d: `M${(half - arm * 0.7).toFixed(2)} ${half - spread} L${half + arm} ${half} L${(half - arm * 0.7).toFixed(2)} ${half + spread} Z`,
-      },
-      `${prefix}cb-voice-play`,
-    );
-    const pause = svg("g", {}, `${prefix}cb-voice-pause`);
-    pause.append(
-      svg("rect", { x: half - arm, y: half - spread, width: arm * 0.62, height: spread * 2, rx: 1.4 }, ""),
-      svg("rect", { x: half + arm * 0.38, y: half - spread, width: arm * 0.62, height: spread * 2, rx: 1.4 }, ""),
-    );
-    return [play, pause];
-  }
-
   private buildScene(style: VoiceStyle): void {
     if (style === "reel") {
       this.sceneEl.createDiv({ cls: "cb-audio-band" });
-      const right = svg("svg", { viewBox: "0 0 44 44", "aria-hidden": "true" }, "cb-audio-reel-right");
-      this.woundRight = svg("circle", { cx: 22, cy: 22, r: 8 }, "cb-voice-wound") as SVGCircleElement;
-      right.append(
-        this.woundRight,
-        svg("circle", { cx: 22, cy: 22, r: 20 }, "cb-voice-rim"),
-        this.spokes(22, 17),
-        svg("circle", { cx: 22, cy: 22, r: 5 }, "cb-voice-hub"),
-      );
-      this.sceneEl.appendChild(right);
-    } else if (style === "analyzer") {
-      this.sceneEl.createDiv({ cls: "cb-audio-grid" });
-    } else if (style === "recorder") {
-      this.sceneEl.createDiv({ cls: "cb-audio-perf is-top" });
-      this.sceneEl.createDiv({ cls: "cb-audio-perf is-bottom" });
-      this.sceneEl.createDiv({ cls: "cb-audio-margin" });
+      const right = reel(22, 8);
+      this.woundRight = right.woundEl;
+      right.node.setAttribute("class", "cb-audio-reel-right");
+      this.sceneEl.appendChild(right.node);
     } else if (style === "sleeve") {
       this.sceneEl.createDiv({ cls: "cb-audio-strip" });
-      const sleeve = this.sceneEl.createDiv({ cls: "cb-audio-sleeve" });
-      sleeve.createDiv({ cls: "cb-audio-slit" });
+      // the paper front is above the bars: the take disappears into the file as it is heard
+      this.waveEl.createDiv({ cls: "cb-audio-sleeve" });
     } else if (style === "dial") {
       this.sceneEl.createDiv({ cls: "cb-audio-panel" });
       const ripples = svg("svg", { viewBox: "0 0 30 44", "aria-hidden": "true" }, "cb-audio-ripples");
@@ -290,7 +249,7 @@ export class AudioCard {
     this.waveEl.addEventListener("pointerdown", (event) => event.stopPropagation());
     this.waveEl.addEventListener("pointermove", (event) => {
       const ratio = this.ratioFromEvent(event.clientX);
-      this.cueEl.setCssProps({ "--cb-audio-cue": `${(ratio * 100).toFixed(2)}%` });
+      this.cueEl.setCssProps({ "--cb-audio-cue": ratio.toFixed(4) });
       this.cueEl.dataset.time = formatTime(ratio * this.node.duration);
       this.cueEl.hidden = false;
     });
@@ -304,7 +263,7 @@ export class AudioCard {
   }
 
   private ratioFromEvent(clientX: number): number {
-    const rect = this.waveEl.getBoundingClientRect();
+    const rect = this.barsEl.getBoundingClientRect();
     if (rect.width <= 0) return 0;
     return clamp((clientX - rect.left) / rect.width, 0, 1);
   }
@@ -357,36 +316,18 @@ export class AudioCard {
       "--cb-audio-mark": `${Math.round(MARK_SIZE[node.voiceStyle] * node.scale)}px`,
       "--cb-audio-tail": `${Math.round(SCENE_TAIL[node.voiceStyle] * node.scale)}px`,
     });
-    this.layoutWave(node);
+    this.layoutBars(node);
     this.setProgress(this.ratio);
   }
 
-  /** Rebuilds the columns — or the ink trace — whenever the card width changes. */
-  private layoutWave(node: AudioBoardNode): void {
-    const mark = MARK_SIZE[node.voiceStyle] * node.scale;
+  /** Rebuilds the columns whenever the card width or the drawing changes. */
+  private layoutBars(node: AudioBoardNode): void {
     const usable =
-      node.width - CARD_PADDING * 2 - mark - SCENE_TAIL[node.voiceStyle] * node.scale - 11 * node.scale;
-
-    if (node.voiceStyle === "recorder") {
-      if (this.inkPlayed) return;
-      const box = svg("svg", {
-        viewBox: "0 0 100 40",
-        preserveAspectRatio: "none",
-        "aria-hidden": "true",
-      }, "cb-audio-ink");
-      const trace = this.inkTrace(resample(node.peaks, INK_POINTS));
-      const base = svg("path", { d: trace }, "cb-voice-ink");
-      const played = svg("path", {
-        d: trace,
-        pathLength: 100,
-        "stroke-dasharray": "0 100",
-      }, "cb-voice-ink is-played") as SVGPathElement;
-      box.append(base, played);
-      this.waveEl.insertBefore(box, this.cueEl);
-      this.inkPlayed = played;
-      return;
-    }
-
+      node.width -
+      CARD_PADDING * 2 -
+      MARK_SIZE[node.voiceStyle] * node.scale -
+      SCENE_TAIL[node.voiceStyle] * node.scale -
+      11 * node.scale;
     const wanted = clamp(Math.floor(usable / BAR_PITCH), MIN_BARS, MAX_BARS);
     if (wanted === this.barCount && this.bars.length > 0) {
       this.paintBars(node, wanted);
@@ -396,21 +337,9 @@ export class AudioCard {
     for (const bar of this.bars) bar.remove();
     this.bars = [];
     for (let index = 0; index < wanted; index++) {
-      this.bars.push(this.waveEl.createSpan({ cls: "cb-audio-bar" }));
+      this.bars.push(this.barsEl.createSpan({ cls: "cb-audio-bar" }));
     }
     this.paintBars(node, wanted);
-  }
-
-  /** A single continuous trace that swings above and below the line. */
-  private inkTrace(peaks: number[]): string {
-    const parts: string[] = [];
-    for (let index = 0; index < peaks.length; index++) {
-      const x = ((index / (peaks.length - 1)) * 100).toFixed(2);
-      const reach = peaks[index] * 17;
-      const y = (20 + (index % 2 === 0 ? -reach : reach)).toFixed(2);
-      parts.push(`${index ? "L" : "M"}${x} ${y}`);
-    }
-    return parts.join(" ");
   }
 
   private paintBars(node: AudioBoardNode, count: number): void {
@@ -428,13 +357,10 @@ export class AudioCard {
       "--cb-audio-pull": `${(played * 100).toFixed(2)}%`,
     });
 
-    const total = this.bars.length || INK_POINTS - 1;
-    const reached = Math.round(played * total);
+    const reached = Math.round(played * this.bars.length);
     for (let index = 0; index < this.bars.length; index++) {
       this.bars[index].classList.toggle("is-played", index < reached);
     }
-    this.inkPlayed?.setAttribute("stroke-dasharray", `${Math.round(played * 100)} 100`);
-    this.sealRing?.setAttribute("stroke-dasharray", `${Math.round(played * 100)} 100`);
     this.woundLeft?.setAttribute("r", (18 - played * 10).toFixed(2));
     this.woundRight?.setAttribute("r", (8 + played * 10).toFixed(2));
     this.currentEl.textContent = formatTime(played * this.node.duration);
