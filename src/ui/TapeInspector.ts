@@ -1,5 +1,6 @@
 import { setIcon } from "obsidian";
 import type { TapeBoardNode } from "../core/types";
+import { watchSliderFill } from "./sliderFill";
 
 export type TapeStylePatch = Partial<Pick<TapeBoardNode, "accent" | "width" | "height">>;
 
@@ -145,6 +146,8 @@ export class TapeInspector {
     this.widthInput.max = String(Math.max(80, Math.ceil(tape.height)));
     this.widthInput.value = String(Math.round(tape.height));
     this.widthValue.textContent = `${Math.round(tape.height)} px`;
+    watchSliderFill(this.lengthInput);
+    watchSliderFill(this.widthInput);
   }
 
   private updateColor(color: string): void {
@@ -171,7 +174,7 @@ export class TapeInspector {
     const head = row.createDiv({ cls: "cb-slider-head" });
     head.createSpan({ cls: "cb-field-label", text: label });
     const valueEl = head.createSpan({ cls: "cb-slider-value", text: "" });
-    const input = row.createEl("input", {
+    const input = watchSliderFill(row.createEl("input", {
       cls: "cb-slider",
       attr: {
         type: "range",
@@ -180,7 +183,7 @@ export class TapeInspector {
         step: String(step),
         "aria-label": label,
       },
-    });
+    }));
     return { input, valueEl };
   }
 }

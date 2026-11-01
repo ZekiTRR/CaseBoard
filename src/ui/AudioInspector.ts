@@ -1,6 +1,7 @@
 import { setIcon, setTooltip } from "obsidian";
 import type { AudioBoardNode, VoiceStyle } from "../core/types";
 import { VOICE_STYLES, VOICE_STYLE_LABELS } from "../core/types";
+import { paintAllSliders, watchSliderFill } from "./sliderFill";
 
 export interface AudioStylePatch {
   scale?: number;
@@ -131,6 +132,7 @@ export class AudioInspector {
     this.scaleValue.textContent = `${Math.round(node.scale * 100)}%`;
     this.stampInput.value = String(Math.round(node.stampScale * 100));
     this.stampValue.textContent = `${Math.round(node.stampScale * 100)}%`;
+    paintAllSliders(this.el);
     for (const chip of this.styleButtons) {
       chip.classList.toggle("is-active", chip.dataset.voiceStyle === node.voiceStyle);
     }
@@ -153,16 +155,22 @@ export class AudioInspector {
     const row = parent.createDiv({ cls: "cb-slider-row cb-audio-slider" });
     row.createDiv({ cls: "cb-field-label", text: label });
     const track = row.createDiv({ cls: "cb-audio-slider-track" });
-    const input = track.createEl("input", {
-      cls: "cb-slider",
-      attr: {
-        type: "range",
-        min: String(Math.round(bounds[0] * 100)),
-        max: String(Math.round(bounds[1] * 100)),
-        step: "1",
-        "aria-label": label,
-      },
-    });
+    const lo = Math.round(bounds[0] * 100);
+    const hi = Math.round(bounds[1] * 100);
+    const input = watchSliderFill(
+      track.createEl("input", {
+        cls: "cb-slider",
+        attr: {
+          type: "range",
+          min: String(lo),
+          max: String(hi),
+          step: "1",
+          "aria-label": label,
+        },
+      }),
+    );
+    // a notch where the card returns to its own size
+    input.setCssProps({ "--cb-slider-home": `${(((100 - lo) / (hi - lo)) * 100).toFixed(2)}%` });
     const valueEl = track.createSpan({ cls: "cb-slider-value", text: "" });
     return { input, valueEl };
   }

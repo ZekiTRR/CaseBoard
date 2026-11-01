@@ -1,6 +1,7 @@
 import { setIcon, setTooltip } from "obsidian";
 import type { AnchorKind, BoardConnection, ThreadMode } from "../core/types";
 import type { BoardTheme } from "../render/themes";
+import { paintAllSliders, watchSliderFill } from "./sliderFill";
 
 export interface ThreadInspectorHost {
   getConnection(id: string): BoardConnection | null;
@@ -304,6 +305,7 @@ export class ThreadInspector {
       const element = swatch as HTMLElement;
       element.classList.toggle("is-active", element.dataset.color === connection.color);
     }
+    paintAllSliders(this.el);
   }
 
   private rebuildSwatches(color: string): void {
@@ -358,7 +360,7 @@ export class ThreadInspector {
     const head = row.createDiv({ cls: "cb-slider-head" });
     head.createSpan({ cls: "cb-field-label", text: label });
     const value = head.createSpan({ cls: "cb-slider-value", text: initial });
-    const input = row.createEl("input", {
+    const input = watchSliderFill(row.createEl("input", {
       cls: "cb-slider",
       attr: {
         type: "range",
@@ -367,7 +369,7 @@ export class ThreadInspector {
         step: String(step),
         "aria-label": label,
       },
-    });
+    }));
     return { input, value, valueEl: value };
   }
 

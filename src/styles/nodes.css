@@ -1072,6 +1072,7 @@
 .cb-audio {
   /* distance from the waveform's left edge back to the card's inner edge */
   --cb-audio-lead: calc(var(--cb-audio-mark, 32px) + 11px * var(--cb-audio-scale, 1));
+  --cb-audio-wave-h: calc(38px * var(--cb-audio-scale, 1));
 
   position: absolute;
   inset: 0;
@@ -1080,6 +1081,13 @@
   gap: 8px;
   min-height: 0;
   padding: 1px;
+}
+
+/* The reel and the dial wrap the waveform in a band, so their row grows to
+   hold it — otherwise the band climbs over the date and the time line. */
+.cb-audio[data-voice="reel"],
+.cb-audio[data-voice="dial"] {
+  --cb-audio-wave-h: calc(58px * var(--cb-audio-scale, 1));
 }
 
 .cb-audio-head {
@@ -1157,7 +1165,7 @@
   grid-column: 1;
   width: var(--cb-audio-mark, 32px);
   height: var(--cb-audio-mark, 32px);
-  margin-top: calc((38px * var(--cb-audio-scale, 1) - var(--cb-audio-mark, 32px)) / 2);
+  margin-top: calc((var(--cb-audio-wave-h) - var(--cb-audio-mark, 32px)) / 2);
   padding: 0;
   border: 0;
   background: transparent;
@@ -1190,7 +1198,7 @@
 
 .cb-audio-wave {
   position: relative;
-  height: calc(38px * var(--cb-audio-scale, 1));
+  height: var(--cb-audio-wave-h, calc(38px * var(--cb-audio-scale, 1)));
   cursor: pointer;
 }
 
@@ -1451,10 +1459,10 @@
 
 .cb-audio[data-voice="reel"] .cb-audio-band {
   position: absolute;
-  left: calc(-1 * var(--cb-audio-lead) - 6px);
-  right: -6px;
-  top: calc(50% - 30px * var(--cb-audio-scale, 1));
-  height: calc(60px * var(--cb-audio-scale, 1));
+  left: calc(-1 * var(--cb-audio-lead) + 4px);
+  right: 4px;
+  top: 0;
+  bottom: 0;
   border-radius: 5px;
   background: color-mix(in srgb, var(--card-ink) 13%, var(--card-bg));
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--card-ink) 10%, transparent);
@@ -1500,8 +1508,8 @@
   position: absolute;
   z-index: 2;
   left: calc(-1 * var(--cb-audio-lead));
-  top: calc(50% - 24px * var(--cb-audio-scale, 1));
-  height: calc(48px * var(--cb-audio-scale, 1));
+  top: calc(50% - 22px * var(--cb-audio-scale, 1));
+  height: calc(44px * var(--cb-audio-scale, 1));
   width: calc(var(--cb-audio-lead) + var(--cb-audio-pull, 0%));
   border-radius: 2px;
   background: color-mix(in srgb, var(--card-ink) 9%, var(--card-bg));
@@ -1514,10 +1522,10 @@
 
 .cb-audio[data-voice="dial"] .cb-audio-panel {
   position: absolute;
-  left: calc(-1 * var(--cb-audio-lead) - 6px);
-  right: -6px;
-  top: calc(50% - 30px * var(--cb-audio-scale, 1));
-  height: calc(60px * var(--cb-audio-scale, 1));
+  left: calc(-1 * var(--cb-audio-lead) + 4px);
+  right: 4px;
+  top: 0;
+  bottom: 0;
   border-radius: 5px;
   background: color-mix(in srgb, var(--card-ink) 8%, var(--card-bg));
   border: 1px solid color-mix(in srgb, var(--card-ink) 16%, transparent);
