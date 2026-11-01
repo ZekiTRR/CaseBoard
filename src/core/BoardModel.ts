@@ -138,6 +138,7 @@ export function createAudioNode(
     caption,
     scale: 1,
     stampScale: 1,
+    voiceStyle: "reel",
     x: options.position.x,
     y: options.position.y,
     width: size.width,

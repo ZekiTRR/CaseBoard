@@ -1,5 +1,6 @@
 import { App, Menu } from "obsidian";
-import type { BoardConnection, BoardDoc, BoardNode, Vec2 } from "../core/types";
+import type { BoardConnection, BoardDoc, BoardNode, Vec2, VoiceStyle } from "../core/types";
+import { VOICE_STYLES, VOICE_STYLE_LABELS } from "../core/types";
 import type { BoardTheme } from "../render/themes";
 import type { InteractionSelection } from "../interaction/BoardInteraction";
 
@@ -25,6 +26,7 @@ export interface ContextMenuHost {
   onAudioToggle(nodeId: string): void;
   isAudioPlaying(nodeId: string): boolean;
   editAudioCaption(nodeId: string): void;
+  setAudioStyle(style: VoiceStyle): void;
   recordFromBoardMenu(point?: Vec2): void;
   addAudioFromVault(point?: Vec2): void;
   addAudioFromDisk(point?: Vec2): void;
@@ -144,6 +146,15 @@ export class ContextMenus {
             .setIcon("text-cursor-input")
             .onClick(() => this.host.editAudioCaption(single.id)),
         );
+        menu.addSeparator();
+        for (const style of VOICE_STYLES) {
+          menu.addItem((item) => {
+            item
+              .setTitle(VOICE_STYLE_LABELS[style])
+              .setChecked(single.type === "audio" && single.voiceStyle === style)
+              .onClick(() => this.host.setAudioStyle(style));
+          });
+        }
       }
 
       menu.addItem((item) =>

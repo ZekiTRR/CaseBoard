@@ -4,6 +4,7 @@ import {
   DEFAULT_NODE_SIZES,
   NODE_VARIANTS,
   THEME_IDS,
+  VOICE_STYLES,
   type AnchorKind,
   type BackgroundFit,
   type BoardConnection,
@@ -24,6 +25,7 @@ import {
   type TapePlacement,
   type ThemeId,
   type ThreadMode,
+  type VoiceStyle,
 } from "../core/types";
 import { DEFAULT_SETTINGS, makeBoardSettings } from "../core/defaults";
 import { syntheticPeaks } from "../core/BoardModel";
@@ -256,6 +258,7 @@ function readNode(raw: unknown, index: number, warnings: string[]): BoardNode | 
       caption: readString(raw.caption, ""),
       scale: clamp(readNumber(raw.scale, 1, 0.5, 4), 0.5, 4),
       stampScale: clamp(readNumber(raw.stampScale, 1, 0.7, 3), 0.7, 3),
+      voiceStyle: readVoiceStyle(raw.voiceStyle),
     };
   }
 
@@ -461,13 +464,18 @@ function readFontScale(raw: unknown): number {
   return clamp(readNumber(raw, 1, 0.7, 1.8), 0.7, 1.8);
 }
 
-function readVariant(raw: unknown, type: NodeKind): string {
-  const allowed = NODE_VARIANTS[type];
+function readVariant(raw: unknown, type: NodeKind): string {  const allowed = NODE_VARIANTS[type];
   if (typeof raw === "string" && allowed.includes(raw)) return raw;
   if (type === "tape") return "masking";
   if (type === "text") return "sticky";
   if (type === "image") return "polaroid";
   return "paper";
+}
+
+function readVoiceStyle(raw: unknown): VoiceStyle {
+  return typeof raw === "string" && (VOICE_STYLES as string[]).includes(raw)
+    ? (raw as VoiceStyle)
+    : "reel";
 }
 
 function readTheme(raw: unknown, fallback: ThemeId, warnings: string[]): ThemeId {

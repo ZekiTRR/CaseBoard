@@ -19,7 +19,7 @@ Pin notes, photographs and evidence to a cork board, connect them with red threa
 
 - **Multiple boards** — each with its own name, theme, camera position and undo history.
 - **Notes, text cards and photographs** pulled from the vault or imported from disk.
-- **Dictaphone** — record a voice note straight onto the board; the card carries a waveform drawn from the file's own peaks, a duration and a caption line.
+- **Dictaphone** — record a voice note straight onto the board; the card carries a waveform drawn from the file's own peaks, a duration, a caption line and one of six drawings.
 - **Red threads** with dynamic, taut and static physics, sag, auto-tension and subtle sway.
 - **Free-standing tape** — the Tape tool lays strips on cards or directly on an empty board.
 - **Arbitrary tape styling** — colour picker plus length, width and rotation.
@@ -55,6 +55,10 @@ Pin notes, photographs and evidence to a cork board, connect them with red threa
 **Voice note card with a waveform from the take.**
 
 ![Audio card on the corkboard](assets/screenshots/audio-card.jpg)
+
+**The same recording in all six drawings: reel, wax seal, analyzer, wiretap strip, evidence sleeve, receiver dial.**
+
+![Six recording drawings on one board](assets/screenshots/voice-styles.jpg)
 
 **Linked-note import.**
 
@@ -99,9 +103,9 @@ Add the experimental repository `ZekiTRR/CaseBoard`, press **Check for updates**
 - Pick the **Thread** tool, then click two cards to connect them.
 - Pick the **Tape** tool and drag across the board or over any card; a click lays a short strip.
 - Press the **Dictaphone** button (or `R`) and talk; the strip above the toolbar shows the live level, **Stop & pin** drops the card where your cursor is.
-- Click the ink circle on a recording to play it, click the waveform to jump to a moment, right-click the card for a caption.
+- Click a recording to play it, click the waveform to jump to a moment, right-click the card for a caption.
 - Drag the date in the top corner up or down to make it larger inside the card, and drag it back to restore it.
-- Select a recording and its **Recording** panel slides in: one slider scales the whole sticker — dial, waveform and text grow together — and another sizes the date. Stretching with the corner handles still only changes the box.
+- Select a recording and its **Recording** panel slides in: one slider scales the whole sticker — mark, waveform and text grow together — another sizes the date, and six chips redraw the card as a **Reel**, a **Wax seal**, an **Analyzer**, a **Wiretap strip**, an **Evidence sleeve** or a **Receiver dial**. The same six are in the card's right-click menu. Stretching with the corner handles still only changes the box.
 - Select a tape strip to open the **Material** panel and change colour, length and width.
 - Right-click a card for material modes, pin colour, lock, z-order and removal.
 

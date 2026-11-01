@@ -20,6 +20,7 @@ import type {
   TextBoardNode,
   ThemeId,
   Vec2,
+  VoiceStyle,
 } from "../core/types";
 import type { BoardStore } from "../core/BoardStore";
 import { BoardLoadError } from "../core/BoardStore";
@@ -2611,6 +2612,17 @@ export class CaseboardView
 
   closeAudioInspector(): void {
     this.setSelection([], null);
+  }
+
+  /** Which of the six drawings the selected recording wears. */
+  setAudioStyle(style: VoiceStyle): void {
+    const audio = this.getSelectedAudio();
+    if (!audio || audio.voiceStyle === style) return;
+    this.runNodeMutation("Change recording drawing", () => {
+      audio.voiceStyle = style;
+      this.renderer?.refreshNode(audio.id);
+    });
+    this.audioInspector?.setAudio(this.getSelectedAudio());
   }
 
   editAudioCaption(nodeId: string): void {

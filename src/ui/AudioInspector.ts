@@ -1,5 +1,6 @@
-import { setIcon } from "obsidian";
-import type { AudioBoardNode } from "../core/types";
+import { setIcon, setTooltip } from "obsidian";
+import type { AudioBoardNode, VoiceStyle } from "../core/types";
+import { VOICE_STYLES, VOICE_STYLE_LABELS } from "../core/types";
 
 export interface AudioStylePatch {
   scale?: number;
@@ -11,6 +12,7 @@ export interface AudioInspectorHost {
   beginAudioLiveEdit(label: string): void;
   updateAudioLive(patch: AudioStylePatch): void;
   endAudioLiveEdit(): void;
+  setAudioStyle(style: VoiceStyle): void;
   closeAudioInspector(): void;
 }
 
@@ -18,6 +20,15 @@ const SCALE_MIN = 0.6;
 const SCALE_MAX = 3;
 const STAMP_MIN = 0.7;
 const STAMP_MAX = 3;
+
+const STYLE_HINTS: Record<VoiceStyle, string> = {
+  reel: "Two reels and a tape band; the take winds from one spool to the other.",
+  seal: "A wax seal with the triangle pressed into it and a ring of progress.",
+  analyzer: "Graph paper, a red cue in a thin ring, played bars in red.",
+  recorder: "A perforated wiretap strip drawn as one continuous ink trace.",
+  sleeve: "An evidence sleeve that swallows the tape as the take is heard.",
+  dial: "A receiver dial: passed ticks light up, the knob turns with progress.",
+};
 
 /**
  * The material panel for a recording: one drag of the slider resizes the whole
@@ -31,6 +42,7 @@ export class AudioInspector {
   private readonly scaleValue: HTMLElement;
   private readonly stampInput: HTMLInputElement;
   private readonly stampValue: HTMLElement;
+  private styleButtons: HTMLButtonElement[] = [];
 
   constructor(
     root: HTMLElement,
@@ -80,6 +92,21 @@ export class AudioInspector {
       input.addEventListener("pointerup", () => this.finishLive());
     }
 
+    body.createDiv({ cls: "cb-field-label cb-voice-styles-label", text: "Drawing" });
+    const grid = body.createDiv({ cls: "cb-voice-styles" });
+    this.styleButtons = VOICE_STYLES.map((style) => {
+      const chip = grid.createEl("button", {
+        cls: "cb-voice-style",
+        attr: { type: "button", "data-voice-style": style },
+      });
+      chip.createSpan({ text: VOICE_STYLE_LABELS[style] });
+      setTooltip(chip, STYLE_HINTS[style]);
+      chip.addEventListener("click", () => {
+        if (!this.currentId) return;
+        this.host.setAudioStyle(style);
+      });
+      return chip;
+    });
   }
 
   setAudio(node: AudioBoardNode | null): void {
@@ -106,6 +133,9 @@ export class AudioInspector {
     this.scaleValue.textContent = `${Math.round(node.scale * 100)}%`;
     this.stampInput.value = String(Math.round(node.stampScale * 100));
     this.stampValue.textContent = `${Math.round(node.stampScale * 100)}%`;
+    for (const chip of this.styleButtons) {
+      chip.classList.toggle("is-active", chip.dataset.voiceStyle === node.voiceStyle);
+    }
   }
 
   private beginLive(label: string): void {
