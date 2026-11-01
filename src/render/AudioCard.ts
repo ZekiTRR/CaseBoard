@@ -18,31 +18,7 @@ const MIN_BARS = 12;
 const MAX_BARS = 84;
 
 /**
- * The mark is drawn, not typed: one firm crayon pass around the outside, a lighter
- * retracing pass beside it, and a triangle shaded with diagonal strokes so the paper
- * reads through. A per-card chalk filter breaks the edges and punches the grain.
- */
-const RING_MAIN =
-  "M15.4 4.4c6.5-.4 12.1 4.7 12.2 11.1.1 6.5-5.2 11.9-11.7 11.9C9.5 27.4 4 22.1 4 15.7 4 9.6 8.9 4.7 15 4.4c1.2 0 2.1.1 3 .4";
-const RING_RETRACE =
-  "M13.8 5.6c6.1-1.3 12.6 2.9 13.3 9.1.7 6.2-4.4 12.2-10.6 12.7-6.3.5-12.1-4.4-12.4-10.7C3.8 9.9 8.4 5.4 13.8 5.6";
-const TRIANGLE =
-  "M12.4 10.4 21.9 15.7c.8.4.8 1.6 0 2l-9.5 5.3c-.9.5-2-.2-2-1.2V11.6c0-1 1.1-1.6 2-1.2Z";
-const TRIANGLE_ECHO = "M13.6 12.5 20.1 16.2 13.5 19.9Z";
-const PAUSE_ONE = "M13 11.2 12.6 20.8";
-const PAUSE_TWO = "M19.6 11.2 19.2 20.8";
-/** Short flicks outside the circle, the way a crayon is lifted off the paper. */
-const SPARKS = [
-  "M7.4 6.8 5.1 4.5",
-  "M4.4 10.1 1.9 9.2",
-  "M10.4 4.1 9.6 1.6",
-  "M24.6 25.2 26.9 27.5",
-  "M27.6 21.9 30.1 22.8",
-  "M21.6 27.9 22.4 30.4",
-];
-
-/**
- * The voice-note card: a play button drawn in crayon and graphite on the paper,
+ * The voice-note card: the crayon play mark from `assets/play_button_transparent.png`,
  * a waveform built from the file's own peaks, and the caption line the case file carries.
  */
 export class AudioCard {
@@ -51,7 +27,6 @@ export class AudioCard {
   private readonly stampEl: HTMLElement;
   private readonly eqEl: HTMLElement;
   private readonly playEl: HTMLElement;
-  private readonly progressArc: SVGPathElement;
   private readonly waveEl: HTMLElement;
   private readonly cueEl: HTMLElement;
   private readonly currentEl: HTMLElement;
@@ -83,9 +58,6 @@ export class AudioCard {
       attr: { type: "button", "data-audio-control": "play" },
     });
     setTooltip(this.playEl, "Play / pause");
-    const dial = this.buildDial();
-    this.progressArc = dial.arc;
-    this.playEl.appendChild(dial.svg);
 
     const box = main.createDiv({ cls: "cb-audio-box" });
     this.waveEl = box.createDiv({ cls: "cb-audio-wave", attr: { "data-audio-control": "wave" } });
@@ -109,114 +81,6 @@ export class AudioCard {
       event.stopPropagation();
       this.host.onAudioToggle(this.node.id);
     });
-  }
-
-  private buildDial(): { svg: SVGSVGElement; arc: SVGPathElement } {
-    const uid = this.node.id;
-    const hatch = `cb-audio-hatch-${uid}`;
-    const chalk = `cb-audio-chalk-${uid}`;
-    const svg = createSvg("svg", { attr: { viewBox: "0 0 32 32", "aria-hidden": "true" } });
-
-    const defs = createSvg("defs");
-    const filter = createSvg("filter", {
-      attr: {
-        id: chalk,
-        x: "-20%",
-        y: "-20%",
-        width: "140%",
-        height: "140%",
-        "color-interpolation-filters": "sRGB",
-      },
-    });
-    const transfer = createSvg("feComponentTransfer", {
-      attr: { in: "grain", result: "grainAlpha" },
-    });
-    transfer.appendChild(
-      createSvg("feFuncA", { attr: { type: "table", tableValues: "0 0.3 0.86 1 1 1" } }),
-    );
-    filter.append(
-      createSvg("feTurbulence", {
-        attr: {
-          type: "fractalNoise",
-          baseFrequency: "0.028",
-          numOctaves: "3",
-          seed: "7",
-          result: "warp",
-        },
-      }),
-      createSvg("feDisplacementMap", {
-        attr: {
-          in: "SourceGraphic",
-          in2: "warp",
-          scale: "1.15",
-          xChannelSelector: "R",
-          yChannelSelector: "G",
-          result: "wobbled",
-        },
-      }),
-      createSvg("feTurbulence", {
-        attr: {
-          type: "fractalNoise",
-          baseFrequency: "0.21",
-          numOctaves: "3",
-          seed: "19",
-          result: "grain",
-        },
-      }),
-      transfer,
-      createSvg("feComposite", {
-        attr: { in: "wobbled", in2: "grainAlpha", operator: "in" },
-      }),
-    );
-    const pattern = createSvg("pattern", {
-      attr: {
-        id: hatch,
-        width: 2.3,
-        height: 2.3,
-        patternUnits: "userSpaceOnUse",
-        patternTransform: "rotate(-38)",
-      },
-    });
-    pattern.appendChild(createSvg("path", { attr: { d: "M0 0 V2.3", class: "cb-audio-hatch-line" } }));
-    defs.append(filter, pattern);
-    svg.appendChild(defs);
-
-    const mark = createSvg("g", { attr: { class: "cb-audio-mark", filter: `url(#${chalk})` } });
-    mark.appendChild(createSvg("path", { attr: { d: RING_RETRACE, class: "cb-audio-dial-back" } }));
-    mark.appendChild(
-      createSvg("path", { attr: { d: RING_MAIN, class: "cb-audio-dial-ring", pathLength: 100 } }),
-    );
-    const arc = createSvg("path", {
-      attr: {
-        d: RING_MAIN,
-        class: "cb-audio-dial-progress",
-        pathLength: 100,
-        "stroke-dasharray": "0 100",
-      },
-    });
-    mark.appendChild(arc);
-
-    const sparks = createSvg("g", { attr: { class: "cb-audio-sparks" } });
-    for (const d of SPARKS) sparks.appendChild(createSvg("path", { attr: { d } }));
-    mark.appendChild(sparks);
-
-    const glyph = createSvg("g", { attr: { class: "cb-audio-glyph" } });
-    glyph.append(
-      createSvg("path", { attr: { d: TRIANGLE, fill: `url(#${hatch})`, class: "cb-audio-hatch" } }),
-      createSvg("path", { attr: { d: TRIANGLE, class: "cb-audio-triangle" } }),
-      createSvg("path", { attr: { d: TRIANGLE_ECHO, class: "cb-audio-triangle-echo" } }),
-    );
-    mark.appendChild(glyph);
-
-    const pause = createSvg("g", { attr: { class: "cb-audio-pause" } });
-    pause.append(
-      createSvg("path", { attr: { d: PAUSE_ONE } }),
-      createSvg("path", { attr: { d: PAUSE_TWO } }),
-    );
-    mark.appendChild(pause);
-
-    svg.appendChild(mark);
-    return { svg, arc };
   }
 
   private bindWaveEvents(): void {
@@ -320,7 +184,6 @@ export class AudioCard {
     for (let index = 0; index < this.bars.length; index++) {
       this.bars[index].classList.toggle("is-played", index < played);
     }
-    this.progressArc.setAttribute("stroke-dasharray", `${Math.round(ratio * 100)} 100`);
     this.currentEl.textContent = formatTime(ratio * this.node.duration);
   }
 
