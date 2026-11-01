@@ -120,13 +120,13 @@ export class AudioCard {
     const pattern = createSvg("pattern", {
       attr: {
         id: hatch,
-        width: 1.6,
-        height: 1.6,
+        width: 2.4,
+        height: 2.4,
         patternUnits: "userSpaceOnUse",
         patternTransform: "rotate(-38)",
       },
     });
-    pattern.appendChild(createSvg("path", { attr: { d: "M0 0 V1.6", class: "cb-audio-hatch-line" } }));
+    pattern.appendChild(createSvg("path", { attr: { d: "M0 0 V2.4", class: "cb-audio-hatch-line" } }));
     defs.appendChild(pattern);
     svg.appendChild(defs);
 

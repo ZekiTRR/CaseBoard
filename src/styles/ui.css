@@ -2295,3 +2295,17 @@
 .cb-audio-engine {
   display: none;
 }
+
+/* recording panel ------------------------------------------------------- */
+
+.cb-audio-inspector-dot {
+  background: var(--cb-node-accent-current, var(--cb-pin));
+  box-shadow: 0 0 6px color-mix(in srgb, var(--cb-pin) 45%, transparent);
+}
+
+.cb-audio-inspector-hint {
+  font-family: var(--cb-font-ui);
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--cb-ui-muted);
+}

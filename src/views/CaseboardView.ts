@@ -54,6 +54,7 @@ import type { ThreadInspectorHost } from "../ui/ThreadInspector";
 import { ThreadInspector } from "../ui/ThreadInspector";
 import type { TapeInspectorHost, TapeStylePatch } from "../ui/TapeInspector";
 import { TapeInspector } from "../ui/TapeInspector";
+import { AudioInspector, type AudioInspectorHost, type AudioStylePatch } from "../ui/AudioInspector";
 import type { ContextMenuHost } from "../ui/ContextMenus";
 import { ContextMenus } from "../ui/ContextMenus";
 import { ColorPickerModal } from "../ui/ColorPickerModal";
@@ -114,6 +115,7 @@ export class CaseboardView
     InteractionHost,
     ThreadInspectorHost,
     TapeInspectorHost,
+    AudioInspectorHost,
     ContextMenuHost,
     ToolbarActions,
     NodeViewHost
@@ -162,6 +164,7 @@ export class CaseboardView
   private boardMenu: BoardMenu | null = null;
   private inspector: ThreadInspector | null = null;
   private tapeInspector: TapeInspector | null = null;
+  private audioInspector: AudioInspector | null = null;
   private contextMenus: ContextMenus | null = null;
   private history: BoardHistory | null = null;
   private recorder: Recorder | null = null;
@@ -192,6 +195,7 @@ export class CaseboardView
   private liveThreadEdit = false;
   private liveTapeEdit = false;
   private liveStampEdit = false;
+  private liveAudioEdit = false;
 
   private focusMode = false;
   private leftWasCollapsed = false;
@@ -267,6 +271,7 @@ export class CaseboardView
     this.themePicker?.destroy();
     this.inspector?.destroy();
     this.tapeInspector?.destroy();
+    this.audioInspector?.destroy();
     this.loupe?.destroy();
     this.renderer?.destroy();
     this.camera?.destroy();
@@ -351,6 +356,7 @@ export class CaseboardView
     });
     this.inspector = new ThreadInspector(this.root, this);
     this.tapeInspector = new TapeInspector(this.root, this);
+    this.audioInspector = new AudioInspector(this.root, this);
     this.contextMenus = new ContextMenus(this);
 
     applyTheme(this.root, "cork");
@@ -796,6 +802,7 @@ export class CaseboardView
     this.history?.clear();
     this.inspector?.setConnection(null);
     this.tapeInspector?.setTape(null);
+    this.audioInspector?.setAudio(null);
 
     this.renderer?.setBoard(doc);
     if (!this.renderer) throw new Error("Caseboard: renderer was not initialised.");
@@ -877,6 +884,7 @@ export class CaseboardView
     this.emptyEl?.toggleAttribute("hidden", true);
     this.inspector?.setConnection(null);
     this.tapeInspector?.setTape(null);
+    this.audioInspector?.setAudio(null);
     this.closePopovers();
     this.applyErrorTheme();
     this.root.classList.remove("has-board", "has-selection");
@@ -1461,7 +1469,9 @@ export class CaseboardView
     this.renderer?.refreshSelection(nodes, validConnection);
     const connectionObject = validConnection ? this.getConnection(validConnection) : null;
     this.inspector?.setConnection(connectionObject);
+    const single = connectionObject ? null : this.getSelectedAudio();
     this.tapeInspector?.setTape(connectionObject ? null : this.getSelectedTape());
+    this.audioInspector?.setAudio(single);
     this.root.classList.toggle("has-selection", nodes.size > 0 || Boolean(validConnection));
   }
 
@@ -1496,6 +1506,7 @@ export class CaseboardView
     this.markDirty();
     this.updateEmptyState();
     this.tapeInspector?.setTape(this.getSelectedTape());
+    this.audioInspector?.setAudio(this.getSelectedAudio());
     this.toolbar?.updateHistory(this.history?.canUndo ?? false, this.history?.canRedo ?? false);
   }
 
@@ -2556,29 +2567,50 @@ export class CaseboardView
     this.updateHistoryButtons();
   }
 
-  /** Scales the recording itself: box and drawing grow together. */
-  scaleAudioSelection(factor: number): void {
-    if (!this.board) return;
-    const targets = this.board.nodes.filter(
-      (node): node is AudioBoardNode =>
-        this.selection.nodes.has(node.id) && node.type === "audio",
-    );
-    if (targets.length === 0) return;
-    const label = factor === 1 ? "Reset card scale" : "Scale card";
-    this.endInlineEdits();
+  getSelectedAudio(): AudioBoardNode | null {
+    if (!this.board || this.selection.nodes.size !== 1) return null;
+    const node = getNode(this.board, [...this.selection.nodes][0]);
+    return node?.type === "audio" ? node : null;
+  }
+
+  beginAudioLiveEdit(label: string): void {
+    if (!this.board || this.liveAudioEdit) return;
     this.history?.begin(label, JSON.stringify(this.board));
-    for (const node of targets) {
-      const next = factor === 1 ? 1 : clamp(node.scale * factor, 0.6, 3);
-      const applied = next / node.scale;
-      node.scale = next;
-      node.width = clamp(node.width * applied, 200, 1600);
-      node.height = clamp(node.height * applied, 110, 900);
-      touch(this.board);
-      this.renderer?.refreshNode(node.id);
-      this.renderer?.markNodeGeometryChanged(node.id);
+    this.liveAudioEdit = true;
+  }
+
+  /** Scale grows the box and the drawing together; the date only changes its own type size. */
+  updateAudioLive(patch: AudioStylePatch): void {
+    const audio = this.getSelectedAudio();
+    if (!audio) return;
+    if (!this.liveAudioEdit) this.beginAudioLiveEdit("Scale card");
+    if (patch.scale !== undefined) {
+      const next = clamp(patch.scale, 0.6, 3);
+      const applied = next / audio.scale;
+      audio.scale = next;
+      audio.width = clamp(audio.width * applied, 200, 1600);
+      audio.height = clamp(audio.height * applied, 110, 900);
     }
-    this.commitHistory(label);
+    if (patch.stampScale !== undefined) {
+      audio.stampScale = clamp(patch.stampScale, 0.7, 3);
+    }
+    touch(this.board!);
+    this.renderer?.refreshNode(audio.id);
+    this.renderer?.markNodeGeometryChanged(audio.id);
     this.markDirty();
+  }
+
+  endAudioLiveEdit(): void {
+    if (!this.liveAudioEdit) return;
+    this.liveAudioEdit = false;
+    this.touchAndSave();
+    this.commitHistory();
+    this.updateHistoryButtons();
+    this.audioInspector?.setAudio(this.getSelectedAudio());
+  }
+
+  closeAudioInspector(): void {
+    this.setSelection([], null);
   }
 
   editAudioCaption(nodeId: string): void {

@@ -1218,24 +1218,24 @@
 }
 
 .cb-audio-dial-progress {
-  stroke: color-mix(in srgb, var(--cb-node-accent) 78%, var(--card-ink));
-  stroke-width: 2.5;
+  stroke: color-mix(in srgb, var(--cb-node-accent) 55%, var(--card-ink));
+  stroke-width: 2.6;
   opacity: 0;
 }
 
 .cb-audio-hatch-line {
-  stroke: color-mix(in srgb, var(--card-ink) 52%, transparent);
-  stroke-width: 1.05;
+  stroke: color-mix(in srgb, var(--cb-node-accent) 55%, transparent);
+  stroke-width: 1.15;
   stroke-linecap: round;
 }
 
 .cb-audio-triangle {
-  stroke: color-mix(in srgb, var(--card-ink) 72%, transparent);
-  stroke-width: 0.95;
+  stroke: color-mix(in srgb, var(--cb-node-accent) 92%, transparent);
+  stroke-width: 1.25;
 }
 
 .cb-audio-triangle-echo {
-  stroke: color-mix(in srgb, var(--card-ink) 20%, transparent);
+  stroke: color-mix(in srgb, var(--cb-node-accent) 30%, transparent);
   stroke-width: 0.9;
 }
 
@@ -1246,8 +1246,8 @@
 }
 
 .cb-audio-pause {
-  stroke: color-mix(in srgb, var(--card-ink) 74%, transparent);
-  stroke-width: 2.1;
+  stroke: color-mix(in srgb, var(--cb-node-accent) 92%, transparent);
+  stroke-width: 2.2;
   display: none;
 }
 
@@ -1267,7 +1267,7 @@
 }
 
 .cb-audio[data-state="playing"] .cb-audio-hatch-line {
-  stroke: color-mix(in srgb, var(--cb-node-accent) 80%, transparent);
+  stroke: color-mix(in srgb, var(--cb-node-accent) 78%, transparent);
 }
 
 .cb-audio[data-state="playing"] .cb-audio-triangle {

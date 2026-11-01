@@ -101,7 +101,7 @@ Add the experimental repository `ZekiTRR/CaseBoard`, press **Check for updates**
 - Press the **Dictaphone** button (or `R`) and talk; the strip above the toolbar shows the live level, **Stop & pin** drops the card where your cursor is.
 - Click the ink circle on a recording to play it, click the waveform to jump to a moment, right-click the card for a caption.
 - Drag the date in the top corner up or down to make it larger inside the card, and drag it back to restore it.
-- Right-click a recording and use **Scale up** / **Scale down** to grow the whole card — dial, waveform and text scale with it, unlike stretching with the corner handles.
+- Select a recording and its **Recording** panel slides in: one slider scales the whole sticker — dial, waveform and text grow together — and another sizes the date. Stretching with the corner handles still only changes the box.
 - Select a tape strip to open the **Material** panel and change colour, length and width.
 - Right-click a card for material modes, pin colour, lock, z-order and removal.
 
