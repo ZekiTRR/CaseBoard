@@ -2126,3 +2126,172 @@
     animation: none !important;
   }
 }
+
+/* recording strip ------------------------------------------------------- */
+
+.cb-rec-hud {
+  position: absolute;
+  left: 50%;
+  bottom: 68px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--cb-ui-border);
+  border-radius: 12px;
+  background: var(--cb-ui-bg);
+  color: var(--cb-ui-text);
+  backdrop-filter: blur(20px) saturate(1.16);
+  box-shadow:
+    0 16px 40px var(--cb-ui-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  z-index: 41;
+  animation: cb-fade-up 0.18s ease both;
+}
+
+.cb-rec-dot {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 50%;
+  background: #d8453b;
+  box-shadow: 0 0 0 4px rgba(216, 69, 59, 0.18);
+  animation: cb-blink 1.4s ease-in-out infinite;
+}
+
+.cb-rec-time {
+  min-width: 46px;
+  font-family: var(--cb-font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cb-rec-wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 188px;
+  height: 26px;
+  overflow: hidden;
+}
+
+.cb-rec-bar {
+  flex: 1;
+  min-width: 2px;
+  height: calc(var(--cb-rec-peak, 8) * 1%);
+  border-radius: 1.4px;
+  background: color-mix(in srgb, var(--cb-ui-text) 42%, transparent);
+}
+
+.cb-rec-hud.is-live .cb-rec-bar:nth-last-child(-n + 6) {
+  background: color-mix(in srgb, var(--cb-ui-text) 70%, transparent);
+}
+
+.cb-rec-meter {
+  width: 62px;
+  height: 4px;
+  flex: none;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--cb-ui-text) 16%, transparent);
+  overflow: hidden;
+}
+
+.cb-rec-meter-fill {
+  width: var(--cb-rec-level, 0%);
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #6f9e68, #d6b25c, #d8453b);
+  transition: width 0.08s linear;
+}
+
+.cb-rec-stop,
+.cb-rec-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid var(--cb-ui-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cb-ui-text);
+  font-family: var(--cb-font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.cb-rec-stop:hover,
+.cb-rec-cancel:hover {
+  background: var(--cb-ui-hover);
+}
+
+.cb-rec-stop {
+  border-color: color-mix(in srgb, var(--cb-pin) 55%, transparent);
+  background: color-mix(in srgb, var(--cb-pin) 38%, transparent);
+}
+
+.cb-rec-stop:hover {
+  background: color-mix(in srgb, var(--cb-pin) 52%, transparent);
+}
+
+.cb-rec-stop-icon {
+  display: flex;
+}
+
+.cb-rec-stop-icon svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+  stroke: none;
+}
+
+.cb-rec-ghost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 320px;
+  height: 170px;
+  margin: -85px 0 0 -160px;
+  transform: translate(var(--cb-rec-ghost-x, 0px), var(--cb-rec-ghost-y, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed color-mix(in srgb, var(--cb-ui-text) 62%, transparent);
+  border-radius: var(--cb-card-radius, 3px);
+  background:
+    linear-gradient(color-mix(in srgb, var(--cb-ui-bg) 62%, transparent), color-mix(in srgb, var(--cb-ui-bg) 62%, transparent)),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 6px, transparent 6px 12px);
+  color: var(--cb-ui-text);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+  font-family: var(--cb-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 39;
+}
+
+.caseboard-root.is-recording .cb-stage {
+  cursor: crosshair;
+}
+
+.cb-tool-button.is-recording {
+  color: #ffe6e2;
+  background: color-mix(in srgb, var(--cb-pin) 55%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cb-pin) 70%, transparent);
+  animation: cb-blink 1.5s ease-in-out infinite;
+}
+
+.cb-tool-button.is-recording::after {
+  display: none;
+}
+
+.cb-audio-engine {
+  display: none;
+}

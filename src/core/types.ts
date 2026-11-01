@@ -10,7 +10,7 @@ export const THEME_IDS = [
 ] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 
-export type NodeKind = "note" | "text" | "image" | "tape";
+export type NodeKind = "note" | "text" | "image" | "audio" | "tape";
 export type BoardTool = "select" | "pan" | "thread" | "tape";
 
 export type ThreadMode = "dynamic" | "taut" | "static";
@@ -88,7 +88,18 @@ export interface TapeBoardNode extends BaseBoardNode {
   type: "tape";
 }
 
-export type BoardNode = NoteBoardNode | TextBoardNode | ImageBoardNode | TapeBoardNode;
+/** A recording kept on the board: the media file lives in the attachment folder. */
+export interface AudioBoardNode extends BaseBoardNode {
+  type: "audio";
+  file: string;
+  /** Seconds. */
+  duration: number;
+  /** Normalised 0..1 amplitudes, sampled once when the file lands on the board. */
+  peaks: number[];
+  caption: string;
+}
+
+export type BoardNode = NoteBoardNode | TextBoardNode | ImageBoardNode | AudioBoardNode | TapeBoardNode;
 
 export interface ConnectionEnd {
   nodeId: string;
@@ -227,6 +238,7 @@ export const NODE_VARIANTS: Record<NodeKind, string[]> = {
   note: ["paper", "index", "aged", "grid", "kraft", "night", "bare"],
   text: ["sticky", "index", "aged", "grid", "kraft", "night", "bare"],
   image: ["polaroid", "plain", "taped", "bare"],
+  audio: ["paper", "index", "aged", "grid", "kraft", "night", "bare"],
   tape: ["masking"],
 };
 
@@ -234,5 +246,9 @@ export const DEFAULT_NODE_SIZES: Record<NodeKind, { width: number; height: numbe
   note: { width: 280, height: 210 },
   text: { width: 260, height: 180 },
   image: { width: 320, height: 260 },
+  audio: { width: 320, height: 170 },
   tape: { width: 128, height: 26 },
 };
+
+/** How many waveform columns an audio card stores. */
+export const AUDIO_PEAK_COUNT = 96;

@@ -10,6 +10,7 @@ import {
   setTooltip,
 } from "obsidian";
 import type {
+  AudioBoardNode,
   BoardConnection,
   BoardDoc,
   BoardNode,
@@ -27,6 +28,7 @@ import { CameraManager } from "../core/CameraManager";
 import { FileInfoService } from "../core/FileInfoService";
 import {
   bringToFront,
+  createAudioNode,
   createImageNode,
   createNoteNode,
   createTapeNode,
@@ -39,6 +41,8 @@ import {
   touch,
   getNode,
 } from "../core/BoardModel";
+import { AudioPlayback } from "../audio/Playback";
+import { isAudioFileName, peaksFromFile, Recorder, type RecordingTake } from "../audio/Recorder";
 import { BoardRenderer } from "../render/BoardRenderer";
 import { BoardLoupe } from "../render/BoardLoupe";
 import type { NodeViewHost } from "../render/NodeView";
@@ -54,6 +58,7 @@ import type { ContextMenuHost } from "../ui/ContextMenus";
 import { ContextMenus } from "../ui/ContextMenus";
 import { ColorPickerModal } from "../ui/ColorPickerModal";
 import { ConfirmModal } from "../ui/ConfirmModal";
+import { RecordHud } from "../ui/RecordHud";
 import { Toolbar, type ToolbarActions } from "../ui/Toolbar";
 import { ThemePicker } from "../ui/ThemePicker";
 import { BoardMenu } from "../ui/BoardMenu";
@@ -61,8 +66,11 @@ import { ImportModal } from "../ui/ImportModal";
 import { PromptModal } from "../ui/PromptModal";
 import { BoardSettingsModal } from "../ui/BoardSettingsModal";
 import {
+  AudioPickerModal,
   ImagePickerModal,
   NotePickerModal,
+  saveAudioFromDisk,
+  saveBlobToVault,
   saveImageFromDisk,
   saveImageFile,
 } from "../ui/FilePickers";
@@ -156,6 +164,17 @@ export class CaseboardView
   private tapeInspector: TapeInspector | null = null;
   private contextMenus: ContextMenus | null = null;
   private history: BoardHistory | null = null;
+  private recorder: Recorder | null = null;
+  private recordHud: RecordHud | null = null;
+  private recordGhost: HTMLElement | null = null;
+  private recordClient: Vec2 | null = null;
+  private recordWorldHint: Vec2 | null = null;
+  private recording = false;
+  private readonly playback = new AudioPlayback({
+    onProgress: (nodeId, ratio) => this.renderer?.getNodeView(nodeId)?.updateAudioProgress(ratio),
+    onStopped: (nodeId) => this.handleAudioStopped(nodeId),
+    onError: (nodeId) => this.handleAudioError(nodeId),
+  });
 
   private saveDebouncer!: Debouncer;
   private fileRefreshDebouncer!: Debouncer;
@@ -234,6 +253,8 @@ export class CaseboardView
   protected override async onClose(): Promise<void> {
     this.endInlineEdits();
     this.exitFocusMode();
+    this.cancelRecording();
+    this.playback.destroy();
     await this.flushSave();
     this.closing = true;
     if (this.toastTimer !== null) window.clearTimeout(this.toastTimer);
@@ -249,6 +270,8 @@ export class CaseboardView
     this.renderer?.destroy();
     this.camera?.destroy();
     this.toolbar?.destroy();
+    this.recordHud?.destroy();
+    this.recordHud = null;
     this.root?.empty();
     this.contentEl.removeClass("caseboard-content");
     document.body.classList.remove("caseboard-focus-mode");
@@ -309,6 +332,10 @@ export class CaseboardView
 
     this.toolbar = new Toolbar(this.root, this);
     this.toolbar.setFocusMode(false);
+    this.recordHud = new RecordHud(this.root, {
+      onStop: () => void this.stopRecording(),
+      onCancel: () => this.cancelRecording(),
+    });
     this.themePicker = new ThemePicker(this.root, (id) => this.setBoardTheme(id));
     this.boardMenu = new BoardMenu(this.root, {
       getBoards: () => this.getBoardsForMenu(),
@@ -464,6 +491,7 @@ export class CaseboardView
     this.registerDomEvent(this.stage, "dragover", this.onDragOver);
     this.registerDomEvent(this.stage, "dragleave", this.onDragLeave);
     this.registerDomEvent(this.stage, "drop", this.onDrop);
+    this.registerDomEvent(this.stage, "pointermove", this.onStagePointerMove);
 
     this.registerEvent(
       this.app.vault.on("modify", (file) => {
@@ -529,6 +557,10 @@ export class CaseboardView
     if (key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
+      if (this.recording) {
+        this.cancelRecording();
+        return;
+      }
       if (this.loupe?.isActive) {
         this.toggleLoupe();
         return;
@@ -685,6 +717,11 @@ export class CaseboardView
       this.toggleLoupe();
       return;
     }
+    if (lower === "r") {
+      event.preventDefault();
+      this.toggleRecord();
+      return;
+    }
     if (lower === "f") {
       event.preventDefault();
       this.toggleFocus();
@@ -715,6 +752,8 @@ export class CaseboardView
 
   private async applyLoadedBoard(doc: BoardDoc, warnings: string[], initial: boolean): Promise<void> {
     this.closePopovers();
+    this.cancelRecording();
+    this.playback.stop();
     this.board = doc;
     this.boardId = doc.id;
     this.store.setLastBoardId(doc.id);
@@ -964,6 +1003,11 @@ export class CaseboardView
 
   private updateToolHint(): void {
     if (!this.toolHintEl) return;
+    if (this.recording) {
+      this.toolHintEl.removeAttribute("hidden");
+      this.toolHintText.textContent = "Recording · move the card where it should land · R stops, Esc discards";
+      return;
+    }
     const visible =
       Boolean(this.board) && (this.tool === "thread" || this.tool === "pan" || this.tool === "tape");
     this.toolHintEl.toggleAttribute("hidden", !visible);
@@ -1304,6 +1348,7 @@ export class CaseboardView
   undo(): void {
     if (!this.board || !this.history) return;
     this.endInlineEdits();
+    this.playback.stop();
     this.interaction?.cancelActive();
     const entry = this.history.undo();
     if (!entry) return;
@@ -1314,6 +1359,7 @@ export class CaseboardView
   redo(): void {
     if (!this.board || !this.history) return;
     this.endInlineEdits();
+    this.playback.stop();
     this.interaction?.cancelActive();
     const entry = this.history.redo();
     if (!entry) return;
@@ -1593,6 +1639,10 @@ export class CaseboardView
       return;
     }
     if (node.type === "tape") return;
+    if (node.type === "audio") {
+      this.onAudioToggle(node.id);
+      return;
+    }
     const file = this.app.vault.getAbstractFileByPath(node.file);
     if (!(file instanceof TFile)) {
       new Notice("Caseboard: the source file could not be found.");
@@ -1640,6 +1690,8 @@ export class CaseboardView
     }
     if (this.selection.nodes.size === 0) return;
     const ids = new Set(this.selection.nodes);
+    const playing = this.playback.activeNode;
+    if (playing && ids.has(playing)) this.playback.stop();
     const count = ids.size;
     this.history?.begin(count > 1 ? "Remove cards" : "Remove card", JSON.stringify(this.board));
     removeNodes(this.board, ids);
@@ -1747,7 +1799,7 @@ export class CaseboardView
   copyPath(nodeId: string): void {
     if (!this.board) return;
     const node = getNode(this.board, nodeId);
-    if (!node || (node.type !== "note" && node.type !== "image")) return;
+    if (!node || (node.type !== "note" && node.type !== "image" && node.type !== "audio")) return;
     void navigator.clipboard.writeText(node.file).then(
       () => new Notice("Caseboard: vault path copied."),
       () => new Notice("Caseboard: could not copy the path."),
@@ -2060,6 +2112,9 @@ export class CaseboardView
     if (node.type === "image") {
       return node.caption || node.file.split("/").pop() || "Photo";
     }
+    if (node.type === "audio") {
+      return node.caption || node.file.split("/").pop() || "Recording";
+    }
     const firstLine = node.text.split("\n").find((line) => line.trim());
     return firstLine ? firstLine.slice(0, 24) : "Text block";
   }
@@ -2219,6 +2274,313 @@ export class CaseboardView
     this.root.focus({ preventScroll: true });
   }
 
+  // ---------------------------------------------------------------- audio
+
+  toggleRecord(): void {
+    if (this.recording) void this.stopRecording();
+    else void this.startRecording();
+  }
+
+  private async startRecording(point?: Vec2): Promise<void> {
+    if (!this.board || this.recording) return;
+    if (!Recorder.supported()) {
+      new Notice("Caseboard: this Obsidian build has no microphone recording support.");
+      return;
+    }
+    this.endInlineEdits();
+    this.playback.stop();
+    const recorder = new Recorder();
+    this.recorder = recorder;
+    this.recording = true;
+    this.recordWorldHint = point ?? null;
+    this.root.classList.add("is-recording");
+    this.toolbar?.setRecording(true);
+    this.showRecordGhost();
+    this.updateToolHint();
+    this.recordHud?.begin();
+    try {
+      await recorder.start((level) => this.recordHud?.setLevel(level));
+    } catch (error) {
+      this.teardownRecording();
+      this.recorder = null;
+      const denied = error instanceof DOMException && error.name === "NotAllowedError";
+      new Notice(
+        denied
+          ? "Caseboard: microphone access was declined."
+          : "Caseboard: the recorder could not be started.",
+      );
+    }
+  }
+
+  private async stopRecording(): Promise<void> {
+    const recorder = this.recorder;
+    if (!recorder || !this.recording) return;
+    const client = this.recordClient;
+    const hint = this.recordWorldHint;
+    this.teardownRecording();
+
+    let take: RecordingTake | null = null;
+    let peaks: number[] = [];
+    let duration = 0;
+    try {
+      take = await recorder.stop();
+      duration = (await recorder.durationOf(take)) ?? take.duration;
+      peaks = (await recorder.peaks(take)) ?? [];
+    } catch {
+      take = null;
+    } finally {
+      recorder.dispose();
+      this.recorder = null;
+    }
+
+    if (!take || take.blob.size === 0) {
+      new Notice("Caseboard: nothing was recorded.");
+      return;
+    }
+
+    const name = `caseboard-rec-${fileStamp(Date.now())}`;
+    const saved = await saveBlobToVault(
+      this.app,
+      take.blob,
+      name,
+      take.extension,
+      this.getAttachmentFolder(),
+    );
+    if (!saved) return;
+
+    const point =
+      (client ? this.camera?.screenToWorld(client.x, client.y) : undefined) ?? hint ?? undefined;
+    this.addAudioCard(saved.path, duration, peaks, "", point, true);
+    this.showToast("Recording pinned", "success");
+  }
+
+  private cancelRecording(): void {
+    if (!this.recording) return;
+    this.teardownRecording();
+    this.recorder?.cancel();
+    this.recorder?.dispose();
+    this.recorder = null;
+    this.showToast("Recording discarded", "info");
+  }
+
+  private teardownRecording(): void {
+    this.recording = false;
+    this.recordClient = null;
+    this.recordWorldHint = null;
+    this.root.classList.remove("is-recording");
+    this.toolbar?.setRecording(false);
+    this.recordHud?.end();
+    this.hideRecordGhost();
+    this.updateToolHint();
+  }
+
+  private showRecordGhost(): void {
+    if (this.recordGhost) return;
+    const rect = this.stage.getBoundingClientRect();
+    const client = this.recordWorldHint
+      ? this.camera?.worldToScreen(this.recordWorldHint.x, this.recordWorldHint.y)
+      : undefined;
+    this.recordClient = client ?? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    const ghost = this.stage.createDiv({ cls: "cb-rec-ghost", text: "Recording lands here" });
+    this.recordGhost = ghost;
+    this.moveRecordGhost(this.recordClient);
+  }
+
+  private hideRecordGhost(): void {
+    this.recordGhost?.remove();
+    this.recordGhost = null;
+  }
+
+  private moveRecordGhost(client: Vec2): void {
+    if (!this.recordGhost) return;
+    const rect = this.stage.getBoundingClientRect();
+    this.recordGhost.setCssProps({
+      "--cb-rec-ghost-x": `${client.x - rect.left}px`,
+      "--cb-rec-ghost-y": `${client.y - rect.top}px`,
+    });
+  }
+
+  private onStagePointerMove = (event: PointerEvent): void => {
+    if (!this.recording) return;
+    this.recordClient = { x: event.clientX, y: event.clientY };
+    this.moveRecordGhost(this.recordClient);
+  };
+
+  addAudioCard(
+    file: string,
+    duration: number,
+    peaks: number[],
+    caption: string,
+    point?: Vec2,
+    precise = false,
+  ): void {
+    if (!this.board) return;
+    const theme = this.getTheme();
+    const size = DEFAULT_NODE_SIZES.audio;
+    const desired = point ?? this.camera?.worldCenter() ?? { x: 0, y: 0 };
+    const position = precise ? desired : this.findFreePlacement(size.width, size.height, desired);
+    this.endInlineEdits();
+    this.history?.begin("Add recording", JSON.stringify(this.board));
+    const node = createAudioNode(file, duration, peaks, caption, {
+      position,
+      accent: theme.pinColor,
+    });
+    node.z = nextZ(this.board);
+    this.board.nodes.push(node);
+    this.commitHistory("Add recording");
+    this.renderer?.addNode(node);
+    this.setSelection([node.id], null);
+    this.updateEmptyState();
+    this.root.focus({ preventScroll: true });
+  }
+
+  /** Drops and vault picks land here: the trace is decoded once, then stored in the board. */
+  addAudioAt(filePath: string, point?: Vec2): void {
+    if (!this.board) return;
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    if (!(file instanceof TFile)) {
+      new Notice("Caseboard: the recording could not be found.");
+      return;
+    }
+    void this.attachAudioFile(file, point);
+  }
+
+  addAudioFromVault(point?: Vec2): void {
+    if (!this.board) return;
+    new AudioPickerModal(this.app, (file) => this.addAudioAt(file.path, point), this.board.theme).open();
+  }
+
+  addAudioFromDisk(point?: Vec2): void {
+    if (!this.board) return;
+    this.showToast("Choose a recording…", "info");
+    void saveAudioFromDisk(this.app, this.getAttachmentFolder()).then((file) => {
+      if (file) this.addAudioAt(file.path, point);
+    });
+  }
+
+  private async attachAudioFile(file: TFile, point?: Vec2): Promise<void> {
+    let peaks: number[] = [];
+    let duration = 0;
+    try {
+      const buffer = await this.app.vault.readBinary(file);
+      const decoded = await peaksFromFile(buffer);
+      if (decoded) {
+        peaks = decoded.peaks;
+        duration = decoded.duration;
+      }
+    } catch {
+      // Unreadable media still gets a card; the trace falls back to a placeholder.
+    }
+    this.addAudioCard(file.path, duration, peaks, "", point);
+    this.showToast("Recording pinned", "success");
+  }
+
+  onAudioToggle(nodeId: string): void {
+    if (!this.board) return;
+    const node = getNode(this.board, nodeId);
+    if (!node || node.type !== "audio") return;
+
+    if (this.playback.playingNode === nodeId) {
+      this.playback.pause();
+      this.markAudioState(nodeId, "paused");
+      return;
+    }
+    if (this.playback.activeNode === nodeId) {
+      this.playback.play(nodeId, this.audioSource(node), 0, node.duration);
+      this.markAudioState(nodeId, "playing");
+      return;
+    }
+    const info = this.fileInfo.getImageInfo(node.file);
+    if (info.missing || !info.src) {
+      this.markAudioMissing(nodeId, true);
+      new Notice("Caseboard: the recording could not be found.");
+      return;
+    }
+    this.playback.play(nodeId, info.src, 0, node.duration);
+    this.markAudioState(nodeId, "playing");
+  }
+
+  onAudioSeek(nodeId: string, ratio: number): void {
+    if (!this.board) return;
+    const node = getNode(this.board, nodeId);
+    if (!node || node.type !== "audio") return;
+
+    if (this.playback.activeNode === nodeId) {
+      this.playback.seek(ratio);
+      this.markAudioState(nodeId, this.playback.playingNode ? "playing" : "paused");
+      return;
+    }
+    const info = this.fileInfo.getImageInfo(node.file);
+    if (info.missing || !info.src) {
+      this.markAudioMissing(nodeId, true);
+      new Notice("Caseboard: the recording could not be found.");
+      return;
+    }
+    this.playback.play(nodeId, info.src, ratio, node.duration);
+    this.markAudioState(nodeId, "playing");
+  }
+
+  isAudioPlaying(nodeId: string): boolean {
+    return this.playback.playingNode === nodeId;
+  }
+
+  recordFromBoardMenu(point?: Vec2): void {
+    if (this.recording) void this.stopRecording();
+    else void this.startRecording(point);
+  }
+
+  editAudioCaption(nodeId: string): void {
+    if (!this.board) return;
+    const node = getNode(this.board, nodeId);
+    if (!node || node.type !== "audio") return;
+    const audio = node;
+    const board = this.board;
+    const theme = board.theme;
+    new PromptModal(this.app, {
+      title: "Recording caption",
+      description: "One line for the case file. The audio itself is never modified.",
+      value: audio.caption,
+      cta: "Save caption",
+      theme,
+      placeholder: "What does this recording say?",
+      onSave: (value) => {
+        const next = value.trim();
+        if (next.length > 280) return "Keep the caption under 280 characters.";
+        this.history?.begin("Edit caption", JSON.stringify(board));
+        audio.caption = next;
+        touch(board);
+        this.commitHistory("Edit caption");
+        this.renderer?.refreshNode(audio.id);
+        return null;
+      },
+    }).open();
+  }
+
+  private audioSource(node: AudioBoardNode): string {
+    const info = this.fileInfo.getImageInfo(node.file);
+    return info.src ?? this.app.vault.adapter.getResourcePath(node.file);
+  }
+
+  private markAudioState(nodeId: string, state: "idle" | "playing" | "paused"): void {
+    this.renderer?.getNodeView(nodeId)?.updateAudioState(state);
+  }
+
+  private markAudioMissing(nodeId: string, missing: boolean): void {
+    this.renderer?.getNodeView(nodeId)?.updateAudioMissing(missing);
+  }
+
+  private handleAudioStopped(nodeId: string | null): void {
+    if (!nodeId) return;
+    this.markAudioState(nodeId, "idle");
+    this.renderer?.getNodeView(nodeId)?.updateAudioProgress(0);
+  }
+
+  private handleAudioError(nodeId: string): void {
+    this.markAudioMissing(nodeId, true);
+    this.markAudioState(nodeId, "idle");
+    new Notice("Caseboard: the browser refused to play that recording.");
+  }
+
   // ----------------------------------------------------------- text edits
 
   onTextInput(node: TextBoardNode, text: string): void {
@@ -2357,12 +2719,14 @@ export class CaseboardView
     if (!transfer || !point) return;
 
     if (transfer.files.length > 0) {
-      const files = Array.from(transfer.files).filter((file) => file.type.startsWith("image/"));
-      if (files.length === 0) {
-        new Notice("Caseboard: drop image files or notes from the vault.");
+      const files = Array.from(transfer.files);
+      const images = files.filter((file) => file.type.startsWith("image/"));
+      const audio = files.filter((file) => !file.type.startsWith("image/") && isAudioFileName(file.name));
+      if (images.length + audio.length === 0) {
+        new Notice("Caseboard: drop image files, recordings or notes from the vault.");
         return;
       }
-      void this.importDroppedImages(files, point);
+      void this.importDroppedFiles(images, audio, point);
       return;
     }
 
@@ -2387,23 +2751,37 @@ export class CaseboardView
     }
     if (IMAGE_EXTENSIONS.has(target.extension.toLowerCase())) {
       this.addImageAt(target.path, point);
+      return;
+    }
+    if (isAudioFileName(target.name)) {
+      this.addAudioAt(target.path, point);
     }
   };
 
-  private async importDroppedImages(files: File[], point: Vec2): Promise<void> {
-    let index = 0;
-    for (const file of files) {
-      const saved = await saveImageFile(this.app, file, this.store.getSettings().imageFolder);
-      if (saved) {
-        this.addImageAt(saved.path, {
-          x: point.x + index * 34,
-          y: point.y + index * 28,
-        });
-        index++;
-      }
+  private async importDroppedFiles(images: File[], audio: File[], point: Vec2): Promise<void> {
+    const folder = this.store.getSettings().imageFolder;
+    const step = (index: number): Vec2 => ({ x: point.x + index * 34, y: point.y + index * 28 });
+    let placed = 0;
+
+    for (const file of images) {
+      const saved = await saveImageFile(this.app, file, folder);
+      if (!saved) continue;
+      this.addImageAt(saved.path, step(placed));
+      placed++;
     }
-    if (index > 0) {
-      this.showToast(index === 1 ? "Photo pinned" : `${index} photos pinned`, "success");
+
+    for (const file of audio) {
+      const dot = file.name.lastIndexOf(".");
+      const base = dot > 0 ? file.name.slice(0, dot) : file.name;
+      const extension = dot > 0 ? file.name.slice(dot + 1).toLowerCase() : "webm";
+      const saved = await saveBlobToVault(this.app, file, base, extension, folder);
+      if (!saved) continue;
+      this.addAudioAt(saved.path, step(placed));
+      placed++;
+    }
+
+    if (placed > 0) {
+      this.showToast(placed === 1 ? "Pinned to the board" : `${placed} cards pinned`, "success");
       this.root.focus({ preventScroll: true });
     }
   }
@@ -2411,4 +2789,18 @@ export class CaseboardView
 
 function physicalLetter(code: string): string | null {
   return /^Key[A-Z]$/.test(code) ? code.slice(3).toLowerCase() : null;
+}
+
+/** 2026-11-01-1432 — sortable, filesystem-safe recording names. */
+function fileStamp(timestamp: number): string {
+  const date = new Date(timestamp);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate()),
+    "-",
+    pad(date.getHours()),
+    pad(date.getMinutes()),
+  ].join("");
 }

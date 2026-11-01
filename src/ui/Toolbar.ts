@@ -17,6 +17,7 @@ export interface ToolbarActions {
   saveNow(): void;
   toggleFocus(): void;
   toggleLoupe(): void;
+  toggleRecord(): void;
 }
 
 export class Toolbar {
@@ -24,6 +25,7 @@ export class Toolbar {
   private readonly buttons = new Map<string, HTMLButtonElement>();
   private focusButton!: HTMLButtonElement;
   private loupeButton!: HTMLButtonElement;
+  private recordButton!: HTMLButtonElement;
 
   constructor(
     root: HTMLElement,
@@ -37,6 +39,9 @@ export class Toolbar {
     this.toolButton(tools, "thread", "git-branch", "Thread", "C");
     this.loupeButton = this.button(tools, "loupe", "search", "Loupe", "Z", () =>
       actions.toggleLoupe(),
+    );
+    this.recordButton = this.button(tools, "record", "mic", "Dictaphone", "R", () =>
+      actions.toggleRecord(),
     );
     this.toolButton(tools, "tape", "bandage", "Tape", "G");
     this.separator(tools);
@@ -84,6 +89,12 @@ export class Toolbar {
   setLoupe(active: boolean): void {
     this.loupeButton.classList.toggle("is-active", active);
     this.el.classList.toggle("is-loupe", active);
+  }
+
+  setRecording(active: boolean): void {
+    this.recordButton.classList.toggle("is-recording", active);
+    this.recordButton.setAttribute("aria-pressed", String(active));
+    setTooltip(this.recordButton, active ? "Stop recording  (R)" : "Dictaphone  (R)");
   }
 
   setFocusMode(focused: boolean): void {

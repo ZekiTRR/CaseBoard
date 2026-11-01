@@ -1,4 +1,5 @@
 import {
+  AUDIO_PEAK_COUNT,
   BOARD_SCHEMA_VERSION,
   DEFAULT_NODE_SIZES,
   NODE_VARIANTS,
@@ -18,12 +19,14 @@ import {
   type ImportGroup,
   type ImportLayout,
   type ImportMode,
+  type NodeKind,
   type PropertyFilter,
   type TapePlacement,
   type ThemeId,
   type ThreadMode,
 } from "../core/types";
 import { DEFAULT_SETTINGS, makeBoardSettings } from "../core/defaults";
+import { syntheticPeaks } from "../core/BoardModel";
 import { TAPE_COORD_LIMIT } from "../core/tape";
 import { normalizeFolderSetting } from "../util/paths";
 import { clamp, isHexColor, normalizeDeg, MAX_ZOOM, MIN_ZOOM } from "../util/math";
@@ -182,7 +185,7 @@ function readNodes(raw: unknown, warnings: string[]): BoardNode[] {
 function readNode(raw: unknown, index: number, warnings: string[]): BoardNode | null {
   if (!isRecord(raw)) return null;
   const type = raw.type;
-  if (type !== "note" && type !== "text" && type !== "image" && type !== "tape") {
+  if (type !== "note" && type !== "text" && type !== "image" && type !== "audio" && type !== "tape") {
     warnings.push(`Skipped node #${index + 1}: unknown type.`);
     return null;
   }
@@ -234,6 +237,26 @@ function readNode(raw: unknown, index: number, warnings: string[]): BoardNode | 
     };
   }
 
+  if (type === "audio") {
+    const file = readString(raw.file, "").trim();
+    if (!file) {
+      warnings.push(`Skipped audio node #${index + 1}: no file path.`);
+      return null;
+    }
+    const peaks = readPeaks(raw.peaks, file);
+    if (!Array.isArray(raw.peaks)) {
+      warnings.push(`Audio node #${index + 1} had no usable waveform; a placeholder trace was drawn.`);
+    }
+    return {
+      ...base,
+      type,
+      file,
+      duration: readNumber(raw.duration, 0, 0, 60 * 60 * 12),
+      peaks,
+      caption: readString(raw.caption, ""),
+    };
+  }
+
   const file = readString(raw.file, "").trim();
   if (!file) {
     warnings.push(`Skipped image node #${index + 1}: no file path.`);
@@ -246,6 +269,19 @@ function readNode(raw: unknown, index: number, warnings: string[]): BoardNode | 
     caption: readString(raw.caption, ""),
     fit: IMAGE_FITS.includes(raw.fit as ImageFit) ? (raw.fit as ImageFit) : "cover",
   };
+}
+
+/** Waveform columns, kept to AUDIO_PEAK_COUNT so a hand-edited file cannot bloat the board. */
+function readPeaks(raw: unknown, seed: string): number[] {
+  if (!Array.isArray(raw)) return syntheticPeaks(seed, AUDIO_PEAK_COUNT);
+  const values: number[] = [];
+  for (let index = 0; index < Math.min(raw.length, AUDIO_PEAK_COUNT); index++) {
+    const value: unknown = raw[index];
+    values.push(typeof value === "number" && Number.isFinite(value) ? clamp(value, 0.02, 1) : 0.08);
+  }
+  if (values.length === 0) return syntheticPeaks(seed, AUDIO_PEAK_COUNT);
+  while (values.length < AUDIO_PEAK_COUNT) values.push(values[values.length - 1]);
+  return values;
 }
 
 function readConnections(
@@ -423,11 +459,13 @@ function readFontScale(raw: unknown): number {
   return clamp(readNumber(raw, 1, 0.7, 1.8), 0.7, 1.8);
 }
 
-function readVariant(raw: unknown, type: "note" | "text" | "image" | "tape"): string {
+function readVariant(raw: unknown, type: NodeKind): string {
   const allowed = NODE_VARIANTS[type];
   if (typeof raw === "string" && allowed.includes(raw)) return raw;
   if (type === "tape") return "masking";
-  return type === "note" ? "paper" : type === "text" ? "sticky" : "polaroid";
+  if (type === "text") return "sticky";
+  if (type === "image") return "polaroid";
+  return "paper";
 }
 
 function readTheme(raw: unknown, fallback: ThemeId, warnings: string[]): ThemeId {

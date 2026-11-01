@@ -1,6 +1,8 @@
 import {
+  AUDIO_PEAK_COUNT,
   DEFAULT_NODE_SIZES,
   type AnchorKind,
+  type AudioBoardNode,
   type BoardConnection,
   type BoardDoc,
   type BoardNode,
@@ -16,7 +18,7 @@ import {
 import { makeBoardSettings } from "./defaults";
 import type { CaseboardSettings } from "./types";
 import { uid } from "../util/uid";
-import { seededRandom } from "../util/math";
+import { clamp, seededRandom } from "../util/math";
 
 export interface NewNodeOptions {
   position: Vec2;
@@ -117,6 +119,51 @@ export function createImageNode(
     createdAt: Date.now(),
     fastener: "pin",
   };
+}
+
+export function createAudioNode(
+  file: string,
+  duration: number,
+  peaks: number[],
+  caption: string,
+  options: NewNodeOptions,
+): AudioBoardNode {
+  const size = options.size ?? DEFAULT_NODE_SIZES.audio;
+  return {
+    id: uid("n"),
+    type: "audio",
+    file,
+    duration: Math.max(0, duration),
+    peaks: peaks.length ? peaks : syntheticPeaks(file, AUDIO_PEAK_COUNT),
+    caption,
+    x: options.position.x,
+    y: options.position.y,
+    width: size.width,
+    height: size.height,
+    rotation: options.rotation ?? tiltFor(file),
+    z: 1,
+    locked: false,
+    variant: "paper",
+    accent: options.accent,
+    createdAt: Date.now(),
+    fastener: "pin",
+  };
+}
+
+/**
+ * Used when a file cannot be decoded (missing media, unsupported codec): the card keeps
+ * a stable shape derived from its path instead of collapsing into a flat line.
+ */
+export function syntheticPeaks(seed: string, count: number): number[] {
+  const random = seededRandom(`peaks:${seed}`);
+  const out: number[] = [];
+  let energy = 0.5;
+  for (let index = 0; index < count; index++) {
+    if (random() < 0.12) energy = random() < 0.35 ? 0.12 + random() * 0.12 : 0.55 + random() * 0.45;
+    const shape = 0.55 + Math.sin((index / count) * Math.PI) * 0.45;
+    out.push(clamp(energy * (0.72 + random() * 0.3) * shape, 0.07, 1));
+  }
+  return out;
 }
 
 export interface NewConnectionOptions {
@@ -267,7 +314,7 @@ export function patchFilePaths(doc: BoardDoc, oldPath: string, newPath: string):
   };
 
   for (const node of doc.nodes) {
-    if (node.type === "note" || node.type === "image") {
+    if (node.type === "note" || node.type === "image" || node.type === "audio") {
       node.file = patch(node.file);
     }
   }

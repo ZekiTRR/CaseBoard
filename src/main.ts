@@ -90,6 +90,17 @@ export default class CaseboardPlugin extends Plugin {
       },
     });
 
+    this.addCommand({
+      id: "record-voice-note",
+      name: "Record a voice note",
+      checkCallback: (checking) => {
+        const view = this.getActiveView();
+        if (!view) return false;
+        if (!checking) view.recordFromBoardMenu();
+        return true;
+      },
+    });
+
     this.addSettingTab(
       new CaseboardSettingsTab(this.app, this, this.store, {
         openBoard: () => {

@@ -1,4 +1,5 @@
 import type {
+  AudioBoardNode,
   BoardDoc,
   BoardNode,
   ImageBoardNode,
@@ -113,6 +114,8 @@ export class BoardRenderer {
       void this.loadNoteContent(node, view);
     } else if (node.type === "image") {
       this.loadImageContent(node, view);
+    } else if (node.type === "audio") {
+      this.loadAudioContent(node, view);
     }
   }
 
@@ -197,11 +200,14 @@ export class BoardRenderer {
     const board = this.options.getBoard();
     if (!board) return;
     for (const node of board.nodes) {
-      if ((node.type === "note" || node.type === "image") && node.file !== path) continue;
+      if ((node.type === "note" || node.type === "image" || node.type === "audio") && node.file !== path) {
+        continue;
+      }
       const view = this.nodeViews.get(node.id);
       if (!view) continue;
       if (node.type === "note") void this.loadNoteContent(node, view);
       else if (node.type === "image") this.loadImageContent(node, view);
+      else if (node.type === "audio") this.loadAudioContent(node, view);
     }
   }
 
@@ -264,6 +270,8 @@ export class BoardRenderer {
       else void this.loadNoteContent(node, view);
     } else if (node.type === "image") {
       this.loadImageContent(node, view);
+    } else if (node.type === "audio") {
+      this.loadAudioContent(node, view);
     }
   }
 
@@ -281,6 +289,12 @@ export class BoardRenderer {
   private loadImageContent(node: ImageBoardNode, view: NodeView): void {
     const info = this.options.fileInfo.getImageInfo(node.file);
     view.updateImage(info.src, info.missing);
+    view.updateFromNode(node);
+  }
+
+  private loadAudioContent(node: AudioBoardNode, view: NodeView): void {
+    const info = this.options.fileInfo.getImageInfo(node.file);
+    view.updateAudioMissing(info.missing);
     view.updateFromNode(node);
   }
 

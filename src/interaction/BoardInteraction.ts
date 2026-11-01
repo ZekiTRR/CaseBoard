@@ -314,6 +314,12 @@ export class BoardInteraction {
       return;
     }
 
+    // Play and waveform belong to the card's own controls, never to the drag.
+    if (nodeId && target.closest("[data-audio-control]")) {
+      this.host.setSelection([nodeId], null);
+      return;
+    }
+
     const thread = target.closest<SVGElement>(".cb-thread-hit");
     if (thread) {
       const connectionId = thread.dataset.connectionId;

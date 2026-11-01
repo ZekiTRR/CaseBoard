@@ -19,6 +19,7 @@ Pin notes, photographs and evidence to a cork board, connect them with red threa
 
 - **Multiple boards** — each with its own name, theme, camera position and undo history.
 - **Notes, text cards and photographs** pulled from the vault or imported from disk.
+- **Dictaphone** — record a voice note straight onto the board; the card carries a waveform drawn from the file's own peaks, a duration and a caption line.
 - **Red threads** with dynamic, taut and static physics, sag, auto-tension and subtle sway.
 - **Free-standing tape** — the Tape tool lays strips on cards or directly on an empty board.
 - **Arbitrary tape styling** — colour picker plus length, width and rotation.
@@ -46,6 +47,14 @@ Pin notes, photographs and evidence to a cork board, connect them with red threa
 **Loupe with adjustable magnification.**
 
 ![Loupe with adjustable magnification](assets/screenshots/loupe.jpg)
+
+**Dictaphone — recording in progress.**
+
+![Recording strip above the toolbar](assets/screenshots/dictaphone.jpg)
+
+**Voice note card with a waveform from the take.**
+
+![Audio card on the corkboard](assets/screenshots/audio-card.jpg)
 
 **Linked-note import.**
 
@@ -89,6 +98,8 @@ Add the experimental repository `ZekiTRR/CaseBoard`, press **Check for updates**
 - Add notes, text and photographs from the toolbar.
 - Pick the **Thread** tool, then click two cards to connect them.
 - Pick the **Tape** tool and drag across the board or over any card; a click lays a short strip.
+- Press the **Dictaphone** button (or `R`) and talk; the strip above the toolbar shows the live level, **Stop & pin** drops the card where your cursor is.
+- Click the ink circle on a recording to play it, click the waveform to jump to a moment, right-click the card for a caption.
 - Select a tape strip to open the **Material** panel and change colour, length and width.
 - Right-click a card for material modes, pin colour, lock, z-order and removal.
 
@@ -101,6 +112,7 @@ Add the experimental repository `ZekiTRR/CaseBoard`, press **Check for updates**
 | Thread | `C` |
 | Loupe | `Z` |
 | Tape | `G` |
+| Dictaphone | `R` |
 | Pin note | `N` |
 | Text block | `T` |
 | Photograph | `I` |
@@ -122,11 +134,12 @@ The board is desktop-only: it relies on pointer hover, mouse-wheel navigation an
 ## 🔒 Privacy and storage
 
 - **No network access.** The plugin never makes a request, loads no remote code and sends no analytics.
+- **Microphone.** The dictaphone asks Obsidian for microphone access when you press `R` or the **Dictaphone** button. Audio is captured with the browser's `MediaRecorder`, mixed down to a waveform on your machine and written into your vault; the microphone is released as soon as the take ends or is discarded. Nothing is streamed anywhere.
 - **No telemetry, no accounts, no paid features.**
 - Boards are stored as plain JSON files inside your vault, at **Settings → Caseboard → Board folder** (default: `.obsidian/plugins/caseboard/boards`).
-- Images you add, drop or set as a background are copied to **Attachment folder**; leave it empty to follow Obsidian's own attachment settings.
+- Images and recordings you add, drop or set as a background are copied to **Attachment folder**; leave it empty to follow Obsidian's own attachment settings.
 - Plugin preferences live in `.obsidian/plugins/caseboard/data.json`.
-- Source notes are only ever read. Caseboard writes to board JSON files and to the attachment folder you choose.
+- Source notes are only ever read. Caseboard writes to board JSON files and to the attachment folder you choose. Removing a card never deletes its media file.
 
 ---
 

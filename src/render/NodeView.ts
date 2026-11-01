@@ -6,8 +6,9 @@ import type {
   TextBoardNode,
 } from "../core/types";
 import { tapePlacements, usesTape } from "../core/tape";
+import { AudioCard, type AudioCardHost } from "./AudioCard";
 
-export interface NodeViewHost {
+export interface NodeViewHost extends AudioCardHost {
   onTextInput(node: TextBoardNode, text: string): void;
   onTextEditingChange(node: TextBoardNode, editing: boolean): void;
   onTextAutoGrow(node: TextBoardNode, desiredHeight: number): void;
@@ -34,6 +35,7 @@ export class NodeView {
   } | null = null;
   private readonly tapeLayer: HTMLElement;
   private readonly textEl: HTMLElement | null = null;
+  private readonly audio: AudioCard | null = null;
   private readonly sizeBadge: HTMLElement;
 
   private lastIcon = "";
@@ -93,6 +95,9 @@ export class NodeView {
         wrap.classList.remove("is-loaded");
         wrap.classList.add("is-missing");
       });
+    } else if (node.type === "audio") {
+      this.audio = new AudioCard(node, host);
+      this.cardEl.appendChild(this.audio.el);
     } else {
       this.cardEl.addClass("is-tape-node");
       this.cardEl.createDiv({ cls: "cb-tape-surface" });
@@ -145,9 +150,13 @@ export class NodeView {
           ? node.locked
             ? "Locked tape strip"
             : "Tape strip"
-          : node.locked
-            ? "Locked card"
-            : "Card";
+          : node.type === "audio"
+            ? node.locked
+              ? "Locked recording"
+              : "Recording"
+            : node.locked
+              ? "Locked card"
+              : "Card";
       this.el.setAttribute("aria-label", label);
     }
 
@@ -168,6 +177,8 @@ export class NodeView {
       this.imageEls.img.style.objectFit = node.fit;
       this.imageEls.caption.textContent = node.caption || basename(node.file);
       this.imageEls.img.alt = node.caption || basename(node.file);
+    } else if (node.type === "audio" && this.audio) {
+      this.audio.update(node);
     }
 
     this.updateTapeLayout(node);
@@ -201,6 +212,7 @@ export class NodeView {
       node.y - node.height / 2,
     )}px, 0) rotate(${round(node.rotation)}deg)`;
     this.el.style.zIndex = String(node.z);
+    if (this.audio && node.type === "audio") this.audio.update(node);
   }
 
   updateNotePreview(node: NoteBoardNode, meta: NoteMeta | null): void {
@@ -252,6 +264,18 @@ export class NodeView {
       this.imageEls.wrap.classList.remove("is-loaded");
       this.imageEls.img.src = src;
     }
+  }
+
+  updateAudioProgress(ratio: number): void {
+    this.audio?.setProgress(ratio);
+  }
+
+  updateAudioState(state: "idle" | "playing" | "paused"): void {
+    this.audio?.setState(state);
+  }
+
+  updateAudioMissing(missing: boolean): void {
+    this.audio?.setMissing(missing);
   }
 
   setSelected(selected: boolean, single: boolean): void {

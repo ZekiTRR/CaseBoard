@@ -22,6 +22,12 @@ export interface ContextMenuHost {
   replaceImageFromVault(nodeId: string): void;
   replaceImageFromDisk(nodeId: string): void;
   copyPath(nodeId: string): void;
+  onAudioToggle(nodeId: string): void;
+  isAudioPlaying(nodeId: string): boolean;
+  editAudioCaption(nodeId: string): void;
+  recordFromBoardMenu(point?: Vec2): void;
+  addAudioFromVault(point?: Vec2): void;
+  addAudioFromDisk(point?: Vec2): void;
   addNote(): void;
   addTextAt(point?: Vec2): void;
   addImageFromVault(point?: Vec2): void;
@@ -59,6 +65,15 @@ const VARIANTS: Record<BoardNode["type"], Array<{ id: string; label: string }>> 
     { id: "taped", label: "Taped photo" },
     { id: "bare", label: "Bare" },
   ],
+  audio: [
+    { id: "paper", label: "Case paper" },
+    { id: "index", label: "Index card" },
+    { id: "aged", label: "Aged paper" },
+    { id: "grid", label: "Graph paper" },
+    { id: "kraft", label: "Kraft" },
+    { id: "night", label: "Black paper" },
+    { id: "bare", label: "Bare" },
+  ],
   tape: [],
 };
 
@@ -82,7 +97,7 @@ export class ContextMenus {
     menu.addItem((item) => {
       item.setTitle(
         single
-          ? single.type === "note" || single.type === "image"
+          ? single.type === "note" || single.type === "image" || single.type === "audio"
             ? single.file
             : single.type === "text"
               ? "Text block"
@@ -114,6 +129,20 @@ export class ContextMenus {
             .setTitle("Edit text")
             .setIcon("pencil")
             .onClick(() => this.host.openNode(single.id)),
+        );
+      } else if (single.type === "audio") {
+        const playing = this.host.isAudioPlaying(single.id);
+        menu.addItem((item) =>
+          item
+            .setTitle(playing ? "Pause recording" : "Play recording")
+            .setIcon(playing ? "pause" : "play")
+            .onClick(() => this.host.onAudioToggle(single.id)),
+        );
+        menu.addItem((item) =>
+          item
+            .setTitle("Edit caption")
+            .setIcon("text-cursor-input")
+            .onClick(() => this.host.editAudioCaption(single.id)),
         );
       }
 
@@ -245,7 +274,7 @@ export class ContextMenus {
       );
     }
 
-    if (single && (single.type === "note" || single.type === "image")) {
+    if (single && (single.type === "note" || single.type === "image" || single.type === "audio")) {
       menu.addItem((item) =>
         item
           .setTitle("Copy vault path")
@@ -370,6 +399,24 @@ export class ContextMenus {
         .setTitle("Add photo from disk…")
         .setIcon("upload")
         .onClick(() => this.host.addImageFromDisk(point)),
+    );
+    menu.addItem((item) =>
+      item
+        .setTitle("Record a voice note here")
+        .setIcon("mic")
+        .onClick(() => this.host.recordFromBoardMenu(point)),
+    );
+    menu.addItem((item) =>
+      item
+        .setTitle("Add recording from vault…")
+        .setIcon("file-audio")
+        .onClick(() => this.host.addAudioFromVault(point)),
+    );
+    menu.addItem((item) =>
+      item
+        .setTitle("Add recording from disk…")
+        .setIcon("upload")
+        .onClick(() => this.host.addAudioFromDisk(point)),
     );
     menu.addSeparator();
     menu.addItem((item) =>

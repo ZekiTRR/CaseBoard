@@ -10,6 +10,7 @@ import {
   setIcon,
 } from "obsidian";
 import type { ThemeId } from "../core/types";
+import { AUDIO_FILE_EXTENSIONS, isAudioFileName } from "../audio/Recorder";
 import { applyThemeTokens } from "../render/ThemeManager";
 
 const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "avif"]);
@@ -93,6 +94,58 @@ export class ImagePickerModal extends FuzzySuggestModal<TFile> {
   }
 }
 
+export class AudioPickerModal extends FuzzySuggestModal<TFile> {
+  constructor(
+    app: App,
+    private readonly onChoose: (file: TFile) => void,
+    theme: ThemeId,
+  ) {
+    super(app);
+    this.setPlaceholder("Choose a recording from the vault…");
+    this.emptyStateText = "No audio files found.";
+    this.limit = 60;
+    this.modalEl.addClass("caseboard-suggest-modal");
+    applyThemeTokens(this.modalEl, theme);
+  }
+
+  getItems(): TFile[] {
+    return this.app.vault
+      .getFiles()
+      .filter((file) => AUDIO_FILE_EXTENSIONS.includes(file.extension.toLowerCase()))
+      .sort((a, b) => a.path.localeCompare(b.path));
+  }
+
+  getItemText(file: TFile): string {
+    return file.path;
+  }
+
+  override renderSuggestion(item: FuzzyMatch<TFile>, el: HTMLElement): void {
+    const row = el.createDiv({ cls: "cb-suggest-row" });
+    setIcon(row.createSpan({ cls: "cb-suggest-icon" }), "mic");
+    const text = row.createDiv({ cls: "cb-suggest-text" });
+    text.createDiv({ cls: "cb-suggest-title", text: item.item.basename });
+    text.createDiv({ cls: "cb-suggest-path", text: item.item.path });
+  }
+
+  onChooseItem(file: TFile): void {
+    this.onChoose(file);
+  }
+}
+
+/** Picks a recording from disk and copies it into the attachment folder. */
+export async function saveAudioFromDisk(app: App, folder: string): Promise<TFile | null> {
+  const file = await chooseFile("audio/*");
+  if (!file) return null;
+  if (!isAudioFileName(file.name)) {
+    new Notice("Caseboard: only audio files can be pinned.");
+    return null;
+  }
+  const dot = file.name.lastIndexOf(".");
+  const base = dot > 0 ? file.name.slice(0, dot) : file.name;
+  const extension = dot > 0 ? file.name.slice(dot + 1).toLowerCase() : "webm";
+  return saveBlobToVault(app, file, base, extension, folder);
+}
+
 export class FolderPickerModal extends FuzzySuggestModal<TAbstractFile> {
   constructor(
     app: App,
@@ -135,6 +188,25 @@ export async function saveImageFromDisk(app: App, folder: string): Promise<TFile
   const file = await chooseFile();
   if (!file) return null;
   return saveImageFile(app, file, folder);
+}
+
+/** Writes a recorded blob into the attachment folder, keeping Obsidian's naming rules. */
+export async function saveBlobToVault(
+  app: App,
+  blob: Blob,
+  baseName: string,
+  extension: string,
+  folder: string,
+): Promise<TFile | null> {
+  try {
+    const buffer = await blob.arrayBuffer();
+    const path = await targetPath(app, `${baseName}.${extension}`, folder);
+    return await app.vault.createBinary(path, buffer);
+  } catch (error) {
+    console.error("Caseboard: could not save the recording", error);
+    new Notice("Caseboard: the recording could not be saved to the vault.");
+    return null;
+  }
 }
 
 export async function saveImageFile(app: App, file: File, folder: string): Promise<TFile | null> {
@@ -207,11 +279,11 @@ function sanitizeName(name: string): string {
   return name.replace(/[\\/:*?"<>|]/g, "-").trim() || "image";
 }
 
-function chooseFile(): Promise<File | null> {
+function chooseFile(accept = "image/*"): Promise<File | null> {
   return new Promise((resolve) => {
     const input = createEl("input");
     input.type = "file";
-    input.accept = "image/*";
+    input.accept = accept;
     input.hidden = true;
     document.body.appendChild(input);
     let settled = false;
