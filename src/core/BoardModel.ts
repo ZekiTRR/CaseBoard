@@ -136,6 +136,8 @@ export function createAudioNode(
     duration: Math.max(0, duration),
     peaks: peaks.length ? peaks : syntheticPeaks(file, AUDIO_PEAK_COUNT),
     caption,
+    scale: 1,
+    stampScale: 1,
     x: options.position.x,
     y: options.position.y,
     width: size.width,

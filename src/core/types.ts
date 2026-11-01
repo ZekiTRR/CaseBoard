@@ -97,6 +97,10 @@ export interface AudioBoardNode extends BaseBoardNode {
   /** Normalised 0..1 amplitudes, sampled once when the file lands on the board. */
   peaks: number[];
   caption: string;
+  /** Multiplies the card's own drawing: dial, waveform and text. */
+  scale: number;
+  /** Size of the draggable timestamp in the card's corner. */
+  stampScale: number;
 }
 
 export type BoardNode = NoteBoardNode | TextBoardNode | ImageBoardNode | AudioBoardNode | TapeBoardNode;

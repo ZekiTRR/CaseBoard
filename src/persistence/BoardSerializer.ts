@@ -254,6 +254,8 @@ function readNode(raw: unknown, index: number, warnings: string[]): BoardNode | 
       duration: readNumber(raw.duration, 0, 0, 60 * 60 * 12),
       peaks,
       caption: readString(raw.caption, ""),
+      scale: clamp(readNumber(raw.scale, 1, 0.5, 4), 0.5, 4),
+      stampScale: clamp(readNumber(raw.stampScale, 1, 0.7, 3), 0.7, 3),
     };
   }
 

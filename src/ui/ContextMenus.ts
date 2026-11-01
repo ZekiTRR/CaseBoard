@@ -25,6 +25,7 @@ export interface ContextMenuHost {
   onAudioToggle(nodeId: string): void;
   isAudioPlaying(nodeId: string): boolean;
   editAudioCaption(nodeId: string): void;
+  scaleAudioSelection(factor: number): void;
   recordFromBoardMenu(point?: Vec2): void;
   addAudioFromVault(point?: Vec2): void;
   addAudioFromDisk(point?: Vec2): void;
@@ -144,6 +145,27 @@ export class ContextMenus {
             .setIcon("text-cursor-input")
             .onClick(() => this.host.editAudioCaption(single.id)),
         );
+        menu.addSeparator();
+        menu.addItem((item) =>
+          item
+            .setTitle("Scale up")
+            .setIcon("zoom-in")
+            .onClick(() => this.host.scaleAudioSelection(1.18)),
+        );
+        menu.addItem((item) =>
+          item
+            .setTitle("Scale down")
+            .setIcon("zoom-out")
+            .onClick(() => this.host.scaleAudioSelection(1 / 1.18)),
+        );
+        if (single.scale !== 1) {
+          menu.addItem((item) =>
+            item
+              .setTitle(`Reset scale · ${Math.round(single.scale * 100)}%`)
+              .setIcon("maximize")
+              .onClick(() => this.host.scaleAudioSelection(1)),
+          );
+        }
       }
 
       menu.addItem((item) =>

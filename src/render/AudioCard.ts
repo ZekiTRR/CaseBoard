@@ -5,6 +5,8 @@ import { clamp } from "../util/math";
 export interface AudioCardHost {
   onAudioToggle(nodeId: string): void;
   onAudioSeek(nodeId: string, ratio: number): void;
+  /** Dragging the timestamp resizes it; `commit` closes the history entry. */
+  onAudioStamp(nodeId: string, scale: number, commit: boolean): void;
 }
 
 /** Pixels each waveform column owns, bar included. */
@@ -46,6 +48,7 @@ const SPARKS = [
  */
 export class AudioCard {
   readonly el: HTMLElement;
+  private readonly headEl: HTMLElement;
   private readonly stampEl: HTMLElement;
   private readonly eqEl: HTMLElement;
   private readonly playEl: HTMLElement;
@@ -55,7 +58,6 @@ export class AudioCard {
   private readonly currentEl: HTMLElement;
   private readonly totalEl: HTMLElement;
   private readonly noteEl: HTMLElement;
-  private readonly fileEl: HTMLElement;
   private readonly missingEl: HTMLElement;
   private bars: HTMLElement[] = [];
   private barCount = 0;
@@ -65,14 +67,16 @@ export class AudioCard {
     this.node = node;
     this.el = createDiv({ cls: "cb-audio" });
 
-    const head = this.el.createDiv({ cls: "cb-audio-head" });
-    const icon = head.createSpan({ cls: "cb-audio-icon" });
-    setIcon(icon, "mic");
-    head.createSpan({ cls: "cb-audio-kind", text: "Recording" });
-    this.eqEl = head.createSpan({ cls: "cb-audio-eq" });
+    this.headEl = this.el.createDiv({ cls: "cb-audio-head" });
+    this.eqEl = this.headEl.createSpan({ cls: "cb-audio-eq" });
     for (let index = 0; index < 3; index++) this.eqEl.createSpan();
     this.eqEl.hidden = true;
-    this.stampEl = head.createSpan({ cls: "cb-audio-stamp" });
+    this.stampEl = this.headEl.createSpan({
+      cls: "cb-audio-stamp",
+      attr: { "data-audio-control": "stamp" },
+    });
+    setTooltip(this.stampEl, "Drag up or down to resize the date");
+    this.bindStampDrag();
 
     const main = this.el.createDiv({ cls: "cb-audio-main" });
     this.playEl = main.createEl("button", {
@@ -94,7 +98,6 @@ export class AudioCard {
     this.totalEl = times.createSpan({ cls: "cb-audio-total", text: "0:00" });
 
     this.noteEl = this.el.createDiv({ cls: "cb-audio-note" });
-    this.fileEl = this.el.createDiv({ cls: "cb-audio-file" });
     this.missingEl = this.el.createDiv({ cls: "cb-audio-missing" });
     setIcon(this.missingEl.createSpan({ cls: "cb-inline-icon" }), "file-warning");
     this.missingEl.createSpan({ text: "Recording not found in the vault" });
@@ -191,20 +194,58 @@ export class AudioCard {
     return clamp((clientX - rect.left) / rect.width, 0, 1);
   }
 
+  private bindStampDrag(): void {
+    let startY = 0;
+    let startScale = 1;
+    let dragging = false;
+
+    this.stampEl.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      event.stopPropagation();
+      dragging = true;
+      startY = event.clientY;
+      startScale = this.node.stampScale;
+      this.stampEl.classList.add("is-dragging");
+      this.stampEl.setPointerCapture(event.pointerId);
+    });
+
+    this.stampEl.addEventListener("pointermove", (event) => {
+      if (!dragging) return;
+      const next = clamp(startScale + (startY - event.clientY) / 120, 0.7, 3);
+      if (Math.abs(next - this.node.stampScale) < 0.002) return;
+      this.host.onAudioStamp(this.node.id, next, false);
+    });
+
+    const finish = (event: PointerEvent): void => {
+      if (!dragging) return;
+      dragging = false;
+      this.stampEl.classList.remove("is-dragging");
+      if (this.stampEl.hasPointerCapture(event.pointerId)) {
+        this.stampEl.releasePointerCapture(event.pointerId);
+      }
+      this.host.onAudioStamp(this.node.id, this.node.stampScale, true);
+    };
+    this.stampEl.addEventListener("pointerup", finish);
+    this.stampEl.addEventListener("pointercancel", finish);
+  }
+
   update(node: AudioBoardNode): void {
     this.node = node;
     this.stampEl.textContent = formatClock(node.createdAt);
-    this.fileEl.textContent = node.file;
-    this.fileEl.title = node.file;
     this.totalEl.textContent = formatTime(node.duration);
     this.noteEl.textContent = node.caption;
     this.noteEl.hidden = node.caption.trim().length === 0;
+    this.el.setCssProps({
+      "--cb-audio-scale": String(node.scale),
+      "--cb-audio-stamp-scale": String(node.stampScale),
+    });
     this.layoutBars(node);
   }
 
   /** Rebuilds the columns whenever the card width or waveform changes. */
   private layoutBars(node: AudioBoardNode): void {
-    const usable = node.width - CARD_PADDING * 2 - DIAL_WIDTH - DIAL_GAP;
+    const dial = DIAL_WIDTH * node.scale;
+    const usable = node.width - CARD_PADDING * 2 - dial - DIAL_GAP * node.scale;
     const wanted = clamp(Math.floor(usable / BAR_PITCH), MIN_BARS, MAX_BARS);
     if (wanted === this.barCount && this.bars.length > 0) {
       this.paintBars(node, wanted);

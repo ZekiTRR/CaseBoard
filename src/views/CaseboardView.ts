@@ -191,6 +191,7 @@ export class CaseboardView
   private editingNodeId: string | null = null;
   private liveThreadEdit = false;
   private liveTapeEdit = false;
+  private liveStampEdit = false;
 
   private focusMode = false;
   private leftWasCollapsed = false;
@@ -2529,6 +2530,57 @@ export class CaseboardView
     else void this.startRecording(point);
   }
 
+  onAudioStamp(nodeId: string, scale: number, commit: boolean): void {
+    if (!this.board) return;
+    if (commit) {
+      this.endStampEdit();
+      return;
+    }
+    const node = getNode(this.board, nodeId);
+    if (!node || node.type !== "audio") return;
+    if (!this.liveStampEdit) {
+      this.history?.begin("Resize the date", JSON.stringify(this.board));
+      this.liveStampEdit = true;
+    }
+    node.stampScale = clamp(scale, 0.7, 3);
+    touch(this.board);
+    this.renderer?.refreshNode(nodeId);
+    this.markDirty();
+  }
+
+  private endStampEdit(): void {
+    if (!this.liveStampEdit) return;
+    this.liveStampEdit = false;
+    this.touchAndSave();
+    this.commitHistory();
+    this.updateHistoryButtons();
+  }
+
+  /** Scales the recording itself: box and drawing grow together. */
+  scaleAudioSelection(factor: number): void {
+    if (!this.board) return;
+    const targets = this.board.nodes.filter(
+      (node): node is AudioBoardNode =>
+        this.selection.nodes.has(node.id) && node.type === "audio",
+    );
+    if (targets.length === 0) return;
+    const label = factor === 1 ? "Reset card scale" : "Scale card";
+    this.endInlineEdits();
+    this.history?.begin(label, JSON.stringify(this.board));
+    for (const node of targets) {
+      const next = factor === 1 ? 1 : clamp(node.scale * factor, 0.6, 3);
+      const applied = next / node.scale;
+      node.scale = next;
+      node.width = clamp(node.width * applied, 200, 1600);
+      node.height = clamp(node.height * applied, 110, 900);
+      touch(this.board);
+      this.renderer?.refreshNode(node.id);
+      this.renderer?.markNodeGeometryChanged(node.id);
+    }
+    this.commitHistory(label);
+    this.markDirty();
+  }
+
   editAudioCaption(nodeId: string): void {
     if (!this.board) return;
     const node = getNode(this.board, nodeId);
@@ -2622,6 +2674,7 @@ export class CaseboardView
   private endInlineEdits(): void {
     this.finishTextEditing();
     if (this.liveThreadEdit) this.endLiveEdit();
+    if (this.liveStampEdit) this.endStampEdit();
   }
 
   // --------------------------------------------------------------- add/zoom

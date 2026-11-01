@@ -1081,49 +1081,50 @@
 
 .cb-audio-head {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  justify-content: flex-end;
   flex: none;
 }
 
-.cb-audio-icon {
-  display: flex;
-  color: var(--card-muted);
-  opacity: 0.9;
-}
 
-.cb-audio-icon svg {
-  width: 12px;
-  height: 12px;
-  stroke-width: 1.9;
-}
 
-.cb-audio-kind {
-  font-family: var(--cb-font-mono);
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--card-muted);
-}
+
+
+
 
 .cb-audio-stamp {
-  margin-left: auto;
+  padding: 2px 1px;
   font-family: var(--cb-font-mono);
-  font-size: 9.5px;
-  color: color-mix(in srgb, var(--card-muted) 82%, transparent);
+  font-size: calc(9.5px * var(--cb-audio-scale, 1) * var(--cb-audio-stamp-scale, 1));
+  line-height: 1.15;
+  color: color-mix(in srgb, var(--card-muted) 88%, transparent);
+  cursor: ns-resize;
+  user-select: none;
+  touch-action: none;
+  border-bottom: 1px dotted transparent;
+}
+
+.cb-audio-stamp:hover {
+  color: var(--card-ink);
+  border-bottom-color: color-mix(in srgb, var(--card-muted) 55%, transparent);
+}
+
+.cb-audio-stamp.is-dragging {
+  color: var(--card-ink);
+  border-bottom-color: var(--cb-node-accent);
 }
 
 .cb-audio-eq {
   display: flex;
   align-items: flex-end;
   gap: 2px;
-  height: 11px;
+  height: calc(11px * var(--cb-audio-scale, 1));
   margin-left: 2px;
 }
 
 .cb-audio-eq span {
-  width: 2px;
-  height: 4px;
+  width: calc(2px * var(--cb-audio-scale, 1));
+  height: calc(4px * var(--cb-audio-scale, 1));
   border-radius: 1px;
   background: var(--cb-node-accent);
   animation: cb-audio-eq 0.9s ease-in-out infinite;
@@ -1153,8 +1154,8 @@
 .cb-audio-play {
   position: relative;
   flex: none;
-  width: 32px;
-  height: 32px;
+  width: calc(32px * var(--cb-audio-scale, 1));
+  height: calc(32px * var(--cb-audio-scale, 1));
   padding: 0;
   border: 0;
   border-radius: 10px;
@@ -1217,24 +1218,24 @@
 }
 
 .cb-audio-dial-progress {
-  stroke: color-mix(in srgb, var(--cb-node-accent) 62%, #2b1210);
+  stroke: color-mix(in srgb, var(--cb-node-accent) 78%, var(--card-ink));
   stroke-width: 2.5;
   opacity: 0;
 }
 
 .cb-audio-hatch-line {
-  stroke: color-mix(in srgb, var(--card-ink) 78%, transparent);
+  stroke: color-mix(in srgb, var(--card-ink) 52%, transparent);
   stroke-width: 1.05;
   stroke-linecap: round;
 }
 
 .cb-audio-triangle {
-  stroke: color-mix(in srgb, var(--card-ink) 86%, transparent);
-  stroke-width: 1;
+  stroke: color-mix(in srgb, var(--card-ink) 72%, transparent);
+  stroke-width: 0.95;
 }
 
 .cb-audio-triangle-echo {
-  stroke: color-mix(in srgb, var(--card-ink) 26%, transparent);
+  stroke: color-mix(in srgb, var(--card-ink) 20%, transparent);
   stroke-width: 0.9;
 }
 
@@ -1245,7 +1246,7 @@
 }
 
 .cb-audio-pause {
-  stroke: color-mix(in srgb, var(--card-ink) 90%, transparent);
+  stroke: color-mix(in srgb, var(--card-ink) 74%, transparent);
   stroke-width: 2.1;
   display: none;
 }
@@ -1294,7 +1295,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  height: 38px;
+  height: calc(38px * var(--cb-audio-scale, 1));
   cursor: pointer;
 }
 
@@ -1352,7 +1353,7 @@
   align-items: center;
   gap: 5px;
   font-family: var(--cb-font-mono);
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--cb-audio-scale, 1));
   font-variant-numeric: tabular-nums;
   color: var(--card-muted);
 }
@@ -1368,7 +1369,7 @@
   border-top: 1px solid color-mix(in srgb, var(--card-ink) 12%, transparent);
   font-family: var(--cb-font-serif);
   font-style: italic;
-  font-size: 13px;
+  font-size: calc(13px * var(--cb-audio-scale, 1));
   line-height: 1.45;
   color: color-mix(in srgb, var(--card-ink) 88%, transparent);
   overflow: hidden;
@@ -1377,15 +1378,7 @@
   -webkit-box-orient: vertical;
 }
 
-.cb-audio-file {
-  flex: none;
-  font-family: var(--cb-font-mono);
-  font-size: 9.5px;
-  color: color-mix(in srgb, var(--card-muted) 74%, transparent);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
 
 .cb-audio-missing {
   display: flex;
@@ -1415,8 +1408,6 @@
   color: color-mix(in srgb, var(--card-ink) 90%, transparent);
 }
 
-.caseboard-root[data-lod="mid"] .cb-audio-file,
-.caseboard-root[data-lod="far"] .cb-audio-file,
 .caseboard-root[data-lod="far"] .cb-audio-note,
 .caseboard-root[data-lod="far"] .cb-audio-times,
 .caseboard-root[data-lod="far"] .cb-audio-stamp {
