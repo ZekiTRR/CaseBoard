@@ -15,16 +15,34 @@ const DIAL_GAP = 11;
 const MIN_BARS = 12;
 const MAX_BARS = 84;
 
-const DIAL_OUTER =
-  "M16.7 4.6C22.9 5.2 27.5 10.3 27.2 16.4 26.9 22.6 21.9 27.5 15.8 27.2 9.9 26.9 5.2 22 4.9 16 4.6 10.3 9.3 5.1 15.4 4.7c1.3-.1 2.3-.2 3.3.1";
-const DIAL_INNER =
-  "M15.2 5.5C21.1 4.9 26.5 9.7 26.6 15.8 26.7 21.9 22.1 26.9 16 26.8 10.2 26.7 5.5 22 5.4 16.3";
-const DIAL_TRIANGLE =
-  "M13.2 11.3 21.5 15.8c.5.3.5 1 0 1.3l-8.3 4.5c-.6.3-1.2-.1-1.2-.8l.1-8.7c0-.7.6-1.1 1.1-.8Z";
+/**
+ * The circle is drawn as three overlapping passes with broken dashes, so the crayon
+ * runs out of ink in places and overshoots where the stroke meets its own start.
+ */
+const RING_MAIN =
+  "M16.9 4.7C23 5.4 27.6 10.5 27.3 16.6 27 22.7 21.9 27.6 15.8 27.2 9.9 26.8 5.1 21.8 4.8 15.9 4.5 10.2 9.4 5 15.5 4.6c1.4-.1 2.5-.1 3.5.2";
+const RING_PASS_ONE =
+  "M14.6 5.9C20.4 5 26.2 9.4 26.7 15.4 27.2 21.4 22.6 26.9 16.6 27.1 10.7 27.3 5.6 22.8 5.1 17 4.6 11.5 8.7 6.7 14 5.9";
+const RING_PASS_TWO =
+  "M18.6 4.1C24.4 5.5 28.4 10.8 27.8 16.8 27.2 22.7 21.9 27.3 15.9 26.9 10.1 26.5 5.2 21.7 4.6 15.9 4.1 10.7 8.1 5.7 13.6 4.4";
+const TRIANGLE =
+  "M12.7 10.9 21.6 15.9c.6.3.6 1.2 0 1.5l-8.9 4.9c-.7.4-1.5-.1-1.5-.9l.1-9.6c0-.8.8-1.2 1.4-.8Z";
+const TRIANGLE_ECHO = "M13.9 12.5 20.2 16.1 13.7 19.7 13.8 12.7";
+const PAUSE_ONE = "M13.3 11.5 12.9 20.7";
+const PAUSE_TWO = "M19.3 11.3 18.9 20.5";
+/** Short strokes radiating from the circle, like the pencil was lifted with a flourish. */
+const SPARKS = [
+  "M6.5 6.5 4.7 4.7",
+  "M3.9 10.3 2.4 9.7",
+  "M10.3 3.9 9.4 1.9",
+  "M25.5 25.5 27.5 27.5",
+  "M28.2 21.7 29.6 22.3",
+  "M21.7 28.2 22.7 30.3",
+];
 
 /**
- * The voice-note card: an over-traced ink circle for play, a waveform built from the
- * file's own peaks, and the caption line the case file would carry.
+ * The voice-note card: a play button drawn in crayon and graphite on the paper,
+ * a waveform built from the file's own peaks, and the caption line the case file carries.
  */
 export class AudioCard {
   readonly el: HTMLElement;
@@ -92,24 +110,61 @@ export class AudioCard {
   }
 
   private buildDial(): { svg: SVGSVGElement; arc: SVGPathElement } {
+    const hatch = `cb-audio-hatch-${this.node.id}`;
     const svg = createSvg("svg", { attr: { viewBox: "0 0 32 32", "aria-hidden": "true" } });
-    const inner = createSvg("path", {
-      attr: { d: DIAL_INNER, class: "cb-audio-dial-back" },
+
+    const defs = createSvg("defs");
+    const pattern = createSvg("pattern", {
+      attr: {
+        id: hatch,
+        width: 1.6,
+        height: 1.6,
+        patternUnits: "userSpaceOnUse",
+        patternTransform: "rotate(-38)",
+      },
     });
-    const outer = createSvg("path", {
-      attr: { d: DIAL_OUTER, class: "cb-audio-dial-ring", pathLength: 100 },
-    });
+    pattern.appendChild(createSvg("path", { attr: { d: "M0 0 V1.6", class: "cb-audio-hatch-line" } }));
+    defs.appendChild(pattern);
+    svg.appendChild(defs);
+
+    svg.appendChild(
+      createSvg("path", { attr: { d: RING_PASS_TWO, class: "cb-audio-dial-ghost" } }),
+    );
+    svg.appendChild(
+      createSvg("path", { attr: { d: RING_PASS_ONE, class: "cb-audio-dial-back" } }),
+    );
+    svg.appendChild(
+      createSvg("path", { attr: { d: RING_MAIN, class: "cb-audio-dial-ring", pathLength: 100 } }),
+    );
     const arc = createSvg("path", {
-      attr: { d: DIAL_OUTER, class: "cb-audio-dial-progress", pathLength: 100, "stroke-dasharray": "0 100" },
+      attr: {
+        d: RING_MAIN,
+        class: "cb-audio-dial-progress",
+        pathLength: 100,
+        "stroke-dasharray": "0 100",
+      },
     });
+    svg.appendChild(arc);
+
+    const sparks = createSvg("g", { attr: { class: "cb-audio-sparks" } });
+    for (const d of SPARKS) sparks.appendChild(createSvg("path", { attr: { d } }));
+    svg.appendChild(sparks);
+
     const glyph = createSvg("g", { attr: { class: "cb-audio-glyph" } });
-    glyph.appendChild(createSvg("path", { attr: { d: DIAL_TRIANGLE, class: "cb-audio-triangle" } }));
+    glyph.append(
+      createSvg("path", { attr: { d: TRIANGLE, fill: `url(#${hatch})`, class: "cb-audio-hatch" } }),
+      createSvg("path", { attr: { d: TRIANGLE, class: "cb-audio-triangle" } }),
+      createSvg("path", { attr: { d: TRIANGLE_ECHO, class: "cb-audio-triangle-echo" } }),
+    );
+    svg.appendChild(glyph);
+
     const pause = createSvg("g", { attr: { class: "cb-audio-pause" } });
     pause.append(
-      createSvg("path", { attr: { d: "M13 11.7v8.8" } }),
-      createSvg("path", { attr: { d: "M19.3 11.7v8.8" } }),
+      createSvg("path", { attr: { d: PAUSE_ONE } }),
+      createSvg("path", { attr: { d: PAUSE_TWO } }),
     );
-    svg.append(inner, outer, arc, glyph, pause);
+    svg.appendChild(pause);
+
     return { svg, arc };
   }
 

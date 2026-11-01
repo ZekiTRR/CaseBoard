@@ -1178,44 +1178,80 @@
   transform: scale(0.95);
 }
 
+.cb-audio-dial-ghost,
 .cb-audio-dial-back,
 .cb-audio-dial-ring,
 .cb-audio-dial-progress,
+.cb-audio-triangle,
+.cb-audio-triangle-echo,
+.cb-audio-sparks path,
 .cb-audio-pause {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
+.cb-audio-dial-ghost {
+  transform: rotate(4deg);
+  transform-origin: 16px 16px;
+  stroke: var(--cb-node-accent);
+  stroke-width: 1.3;
+  opacity: 0.24;
+  stroke-dasharray: 7 6 16 8 10 7;
+}
+
 .cb-audio-dial-back {
-  stroke: color-mix(in srgb, var(--card-ink) 24%, transparent);
+  transform: rotate(-3deg);
+  transform-origin: 16px 16px;
+  stroke: var(--cb-node-accent);
   stroke-width: 1.5;
+  opacity: 0.45;
+  stroke-dasharray: 14 5 22 6 8 5;
 }
 
 .cb-audio-dial-ring {
-  stroke: color-mix(in srgb, var(--card-ink) 74%, transparent);
-  stroke-width: 2.1;
+  stroke: var(--cb-node-accent);
+  stroke-width: 1.75;
+  opacity: 0.9;
+  stroke-dasharray: 24 3.4 32 2.6 16 3.2;
 }
 
 .cb-audio-dial-progress {
-  stroke: var(--cb-node-accent);
-  stroke-width: 2.4;
+  stroke: color-mix(in srgb, var(--cb-node-accent) 62%, #2b1210);
+  stroke-width: 2.5;
   opacity: 0;
 }
 
+.cb-audio-hatch-line {
+  stroke: color-mix(in srgb, var(--card-ink) 78%, transparent);
+  stroke-width: 1.05;
+  stroke-linecap: round;
+}
+
 .cb-audio-triangle {
-  fill: color-mix(in srgb, var(--card-ink) 82%, transparent);
-  stroke: none;
+  stroke: color-mix(in srgb, var(--card-ink) 86%, transparent);
+  stroke-width: 1;
+}
+
+.cb-audio-triangle-echo {
+  stroke: color-mix(in srgb, var(--card-ink) 26%, transparent);
+  stroke-width: 0.9;
+}
+
+.cb-audio-sparks path {
+  stroke: var(--cb-node-accent);
+  stroke-width: 1.25;
+  opacity: 0.62;
 }
 
 .cb-audio-pause {
-  stroke: color-mix(in srgb, var(--card-ink) 82%, transparent);
-  stroke-width: 2.6;
+  stroke: color-mix(in srgb, var(--card-ink) 90%, transparent);
+  stroke-width: 2.1;
   display: none;
 }
 
-.cb-audio[data-state="playing"] .cb-audio-triangle,
-.cb-audio[data-state="paused"] .cb-audio-triangle {
+.cb-audio[data-state="playing"] .cb-audio-glyph,
+.cb-audio[data-state="paused"] .cb-audio-glyph {
   display: none;
 }
 
@@ -1226,16 +1262,23 @@
 
 .cb-audio[data-state="playing"] .cb-audio-dial-progress,
 .cb-audio[data-state="paused"] .cb-audio-dial-progress {
-  opacity: 0.55;
+  opacity: 1;
 }
 
-.cb-audio[data-state="playing"] .cb-audio-dial-ring {
-  stroke: color-mix(in srgb, var(--cb-node-accent) 78%, transparent);
+.cb-audio[data-state="playing"] .cb-audio-hatch-line {
+  stroke: color-mix(in srgb, var(--cb-node-accent) 80%, transparent);
 }
 
-.cb-audio[data-state="playing"] .cb-audio-pause,
-.cb-audio[data-state="paused"] .cb-audio-pause {
-  stroke: color-mix(in srgb, var(--cb-node-accent) 84%, transparent);
+.cb-audio[data-state="playing"] .cb-audio-triangle {
+  stroke: color-mix(in srgb, var(--cb-node-accent) 88%, transparent);
+}
+
+.cb-audio[data-state="playing"] .cb-audio-triangle-echo {
+  stroke: color-mix(in srgb, var(--cb-node-accent) 45%, transparent);
+}
+
+.cb-audio[data-state="playing"] .cb-audio-pause {
+  stroke: color-mix(in srgb, var(--cb-node-accent) 90%, transparent);
 }
 
 .cb-audio-box {
