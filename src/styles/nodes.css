@@ -1179,6 +1179,86 @@
   transform: scale(0.95);
 }
 
+.cb-audio-dial-back,
+.cb-audio-dial-ring,
+.cb-audio-dial-progress,
+.cb-audio-triangle,
+.cb-audio-triangle-echo,
+.cb-audio-sparks path,
+.cb-audio-pause {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cb-audio-dial-back {
+  stroke: var(--cb-node-accent);
+  stroke-width: 1.7;
+  opacity: 0.42;
+}
+
+.cb-audio-dial-ring {
+  stroke: var(--cb-node-accent);
+  stroke-width: 2.6;
+  opacity: 0.92;
+}
+
+.cb-audio-dial-progress {
+  stroke: color-mix(in srgb, var(--cb-node-accent) 55%, var(--card-ink));
+  stroke-width: 3.1;
+  opacity: 0;
+}
+
+.cb-audio-hatch-line {
+  stroke: color-mix(in srgb, var(--cb-node-accent) 72%, transparent);
+  stroke-width: 1.45;
+  stroke-linecap: round;
+}
+
+.cb-audio-triangle {
+  stroke: var(--cb-node-accent);
+  stroke-width: 2.2;
+}
+
+.cb-audio-triangle-echo {
+  stroke: color-mix(in srgb, var(--cb-node-accent) 34%, transparent);
+  stroke-width: 1.1;
+}
+
+.cb-audio-sparks path {
+  stroke: var(--cb-node-accent);
+  stroke-width: 2.2;
+  opacity: 0.85;
+}
+
+.cb-audio-pause {
+  stroke: var(--cb-node-accent);
+  stroke-width: 3;
+  display: none;
+}
+
+.cb-audio[data-state="playing"] .cb-audio-glyph,
+.cb-audio[data-state="paused"] .cb-audio-glyph {
+  display: none;
+}
+
+.cb-audio[data-state="playing"] .cb-audio-pause,
+.cb-audio[data-state="paused"] .cb-audio-pause {
+  display: block;
+}
+
+.cb-audio[data-state="playing"] .cb-audio-dial-progress {
+  opacity: 1;
+}
+
+.cb-audio-play:hover {
+  transform: scale(1.05);
+}
+
+.cb-audio-play:active {
+  transform: scale(0.95);
+}
+
 .cb-audio-dial-ghost,
 .cb-audio-dial-back,
 .cb-audio-dial-ring,
@@ -1264,22 +1344,6 @@
 .cb-audio[data-state="playing"] .cb-audio-dial-progress,
 .cb-audio[data-state="paused"] .cb-audio-dial-progress {
   opacity: 1;
-}
-
-.cb-audio[data-state="playing"] .cb-audio-hatch-line {
-  stroke: color-mix(in srgb, var(--cb-node-accent) 78%, transparent);
-}
-
-.cb-audio[data-state="playing"] .cb-audio-triangle {
-  stroke: color-mix(in srgb, var(--cb-node-accent) 88%, transparent);
-}
-
-.cb-audio[data-state="playing"] .cb-audio-triangle-echo {
-  stroke: color-mix(in srgb, var(--cb-node-accent) 45%, transparent);
-}
-
-.cb-audio[data-state="playing"] .cb-audio-pause {
-  stroke: color-mix(in srgb, var(--cb-node-accent) 90%, transparent);
 }
 
 .cb-audio-box {

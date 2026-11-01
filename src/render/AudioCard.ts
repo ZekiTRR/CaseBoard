@@ -18,28 +18,27 @@ const MIN_BARS = 12;
 const MAX_BARS = 84;
 
 /**
- * The circle is drawn as three overlapping passes with broken dashes, so the crayon
- * runs out of ink in places and overshoots where the stroke meets its own start.
+ * The mark is drawn, not typed: one firm crayon pass around the outside, a lighter
+ * retracing pass beside it, and a triangle shaded with diagonal strokes so the paper
+ * reads through. A per-card chalk filter breaks the edges and punches the grain.
  */
 const RING_MAIN =
-  "M16.9 4.7C23 5.4 27.6 10.5 27.3 16.6 27 22.7 21.9 27.6 15.8 27.2 9.9 26.8 5.1 21.8 4.8 15.9 4.5 10.2 9.4 5 15.5 4.6c1.4-.1 2.5-.1 3.5.2";
-const RING_PASS_ONE =
-  "M14.6 5.9C20.4 5 26.2 9.4 26.7 15.4 27.2 21.4 22.6 26.9 16.6 27.1 10.7 27.3 5.6 22.8 5.1 17 4.6 11.5 8.7 6.7 14 5.9";
-const RING_PASS_TWO =
-  "M18.6 4.1C24.4 5.5 28.4 10.8 27.8 16.8 27.2 22.7 21.9 27.3 15.9 26.9 10.1 26.5 5.2 21.7 4.6 15.9 4.1 10.7 8.1 5.7 13.6 4.4";
+  "M15.4 4.4c6.5-.4 12.1 4.7 12.2 11.1.1 6.5-5.2 11.9-11.7 11.9C9.5 27.4 4 22.1 4 15.7 4 9.6 8.9 4.7 15 4.4c1.2 0 2.1.1 3 .4";
+const RING_RETRACE =
+  "M13.8 5.6c6.1-1.3 12.6 2.9 13.3 9.1.7 6.2-4.4 12.2-10.6 12.7-6.3.5-12.1-4.4-12.4-10.7C3.8 9.9 8.4 5.4 13.8 5.6";
 const TRIANGLE =
-  "M12.7 10.9 21.6 15.9c.6.3.6 1.2 0 1.5l-8.9 4.9c-.7.4-1.5-.1-1.5-.9l.1-9.6c0-.8.8-1.2 1.4-.8Z";
-const TRIANGLE_ECHO = "M13.9 12.5 20.2 16.1 13.7 19.7 13.8 12.7";
-const PAUSE_ONE = "M13.3 11.5 12.9 20.7";
-const PAUSE_TWO = "M19.3 11.3 18.9 20.5";
-/** Short strokes radiating from the circle, like the pencil was lifted with a flourish. */
+  "M12.4 10.4 21.9 15.7c.8.4.8 1.6 0 2l-9.5 5.3c-.9.5-2-.2-2-1.2V11.6c0-1 1.1-1.6 2-1.2Z";
+const TRIANGLE_ECHO = "M13.6 12.5 20.1 16.2 13.5 19.9Z";
+const PAUSE_ONE = "M13 11.2 12.6 20.8";
+const PAUSE_TWO = "M19.6 11.2 19.2 20.8";
+/** Short flicks outside the circle, the way a crayon is lifted off the paper. */
 const SPARKS = [
-  "M6.5 6.5 4.7 4.7",
-  "M3.9 10.3 2.4 9.7",
-  "M10.3 3.9 9.4 1.9",
-  "M25.5 25.5 27.5 27.5",
-  "M28.2 21.7 29.6 22.3",
-  "M21.7 28.2 22.7 30.3",
+  "M7.4 6.8 5.1 4.5",
+  "M4.4 10.1 1.9 9.2",
+  "M10.4 4.1 9.6 1.6",
+  "M24.6 25.2 26.9 27.5",
+  "M27.6 21.9 30.1 22.8",
+  "M21.6 27.9 22.4 30.4",
 ];
 
 /**
@@ -113,30 +112,78 @@ export class AudioCard {
   }
 
   private buildDial(): { svg: SVGSVGElement; arc: SVGPathElement } {
-    const hatch = `cb-audio-hatch-${this.node.id}`;
+    const uid = this.node.id;
+    const hatch = `cb-audio-hatch-${uid}`;
+    const chalk = `cb-audio-chalk-${uid}`;
     const svg = createSvg("svg", { attr: { viewBox: "0 0 32 32", "aria-hidden": "true" } });
 
     const defs = createSvg("defs");
+    const filter = createSvg("filter", {
+      attr: {
+        id: chalk,
+        x: "-20%",
+        y: "-20%",
+        width: "140%",
+        height: "140%",
+        "color-interpolation-filters": "sRGB",
+      },
+    });
+    const transfer = createSvg("feComponentTransfer", {
+      attr: { in: "grain", result: "grainAlpha" },
+    });
+    transfer.appendChild(
+      createSvg("feFuncA", { attr: { type: "table", tableValues: "0 0.3 0.86 1 1 1" } }),
+    );
+    filter.append(
+      createSvg("feTurbulence", {
+        attr: {
+          type: "fractalNoise",
+          baseFrequency: "0.028",
+          numOctaves: "3",
+          seed: "7",
+          result: "warp",
+        },
+      }),
+      createSvg("feDisplacementMap", {
+        attr: {
+          in: "SourceGraphic",
+          in2: "warp",
+          scale: "1.15",
+          xChannelSelector: "R",
+          yChannelSelector: "G",
+          result: "wobbled",
+        },
+      }),
+      createSvg("feTurbulence", {
+        attr: {
+          type: "fractalNoise",
+          baseFrequency: "0.21",
+          numOctaves: "3",
+          seed: "19",
+          result: "grain",
+        },
+      }),
+      transfer,
+      createSvg("feComposite", {
+        attr: { in: "wobbled", in2: "grainAlpha", operator: "in" },
+      }),
+    );
     const pattern = createSvg("pattern", {
       attr: {
         id: hatch,
-        width: 2.4,
-        height: 2.4,
+        width: 2.3,
+        height: 2.3,
         patternUnits: "userSpaceOnUse",
         patternTransform: "rotate(-38)",
       },
     });
-    pattern.appendChild(createSvg("path", { attr: { d: "M0 0 V2.4", class: "cb-audio-hatch-line" } }));
-    defs.appendChild(pattern);
+    pattern.appendChild(createSvg("path", { attr: { d: "M0 0 V2.3", class: "cb-audio-hatch-line" } }));
+    defs.append(filter, pattern);
     svg.appendChild(defs);
 
-    svg.appendChild(
-      createSvg("path", { attr: { d: RING_PASS_TWO, class: "cb-audio-dial-ghost" } }),
-    );
-    svg.appendChild(
-      createSvg("path", { attr: { d: RING_PASS_ONE, class: "cb-audio-dial-back" } }),
-    );
-    svg.appendChild(
+    const mark = createSvg("g", { attr: { class: "cb-audio-mark", filter: `url(#${chalk})` } });
+    mark.appendChild(createSvg("path", { attr: { d: RING_RETRACE, class: "cb-audio-dial-back" } }));
+    mark.appendChild(
       createSvg("path", { attr: { d: RING_MAIN, class: "cb-audio-dial-ring", pathLength: 100 } }),
     );
     const arc = createSvg("path", {
@@ -147,11 +194,11 @@ export class AudioCard {
         "stroke-dasharray": "0 100",
       },
     });
-    svg.appendChild(arc);
+    mark.appendChild(arc);
 
     const sparks = createSvg("g", { attr: { class: "cb-audio-sparks" } });
     for (const d of SPARKS) sparks.appendChild(createSvg("path", { attr: { d } }));
-    svg.appendChild(sparks);
+    mark.appendChild(sparks);
 
     const glyph = createSvg("g", { attr: { class: "cb-audio-glyph" } });
     glyph.append(
@@ -159,15 +206,16 @@ export class AudioCard {
       createSvg("path", { attr: { d: TRIANGLE, class: "cb-audio-triangle" } }),
       createSvg("path", { attr: { d: TRIANGLE_ECHO, class: "cb-audio-triangle-echo" } }),
     );
-    svg.appendChild(glyph);
+    mark.appendChild(glyph);
 
     const pause = createSvg("g", { attr: { class: "cb-audio-pause" } });
     pause.append(
       createSvg("path", { attr: { d: PAUSE_ONE } }),
       createSvg("path", { attr: { d: PAUSE_TWO } }),
     );
-    svg.appendChild(pause);
+    mark.appendChild(pause);
 
+    svg.appendChild(mark);
     return { svg, arc };
   }
 

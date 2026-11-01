@@ -80,10 +80,6 @@ export class AudioInspector {
       input.addEventListener("pointerup", () => this.finishLive());
     }
 
-    body.createDiv({
-      cls: "cb-audio-inspector-hint",
-      text: "Corner handles stretch the card; this scales the whole sticker — dial, waveform and text together.",
-    });
   }
 
   setAudio(node: AudioBoardNode | null): void {
@@ -126,11 +122,10 @@ export class AudioInspector {
 
   private slider(parent: HTMLElement, label: string): { input: HTMLInputElement; valueEl: HTMLElement } {
     const bounds = label === "Card scale" ? [SCALE_MIN, SCALE_MAX] : [STAMP_MIN, STAMP_MAX];
-    const row = parent.createDiv({ cls: "cb-slider-row" });
-    const head = row.createDiv({ cls: "cb-slider-head" });
-    head.createSpan({ cls: "cb-field-label", text: label });
-    const valueEl = head.createSpan({ cls: "cb-slider-value", text: "" });
-    const input = row.createEl("input", {
+    const row = parent.createDiv({ cls: "cb-slider-row cb-audio-slider" });
+    row.createDiv({ cls: "cb-field-label", text: label });
+    const track = row.createDiv({ cls: "cb-audio-slider-track" });
+    const input = track.createEl("input", {
       cls: "cb-slider",
       attr: {
         type: "range",
@@ -140,6 +135,7 @@ export class AudioInspector {
         "aria-label": label,
       },
     });
+    const valueEl = track.createSpan({ cls: "cb-slider-value", text: "" });
     return { input, valueEl };
   }
 }
